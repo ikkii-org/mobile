@@ -38,6 +38,7 @@ export async function createDuel(
     return duel;
 }
 
+
 export async function joinDuel(duelId: string, player2: string): Promise<Duel> {
     const duel = duels.get(duelId);
     if (!duel) {
@@ -58,6 +59,7 @@ export async function joinDuel(duelId: string, player2: string): Promise<Duel> {
     duels.set(duel.id, duel);
     return duel;
 }
+
 
 export async function submitResult(
     duelId: string,
@@ -111,6 +113,7 @@ export async function submitResult(
     return { duel, resolved: false };
 }
 
+
 export async function cancelDuel(duelId: string, player: string): Promise<Duel> {
     const duel = duels.get(duelId);
     if (!duel) {
@@ -129,6 +132,8 @@ export async function cancelDuel(duelId: string, player: string): Promise<Duel> 
     }
     throw new Error("Cannot cancel duel after another player has joined");
 }
+
+
 export async function cleanUpExpiredDuels(): Promise<number> {
     const now = new Date();
     let count = 0;
@@ -141,6 +146,7 @@ export async function cleanUpExpiredDuels(): Promise<number> {
     }
     return count;
 }
+
 
 export async function getDuel(duelId: string): Promise<Duel> {
     const duel = duels.get(duelId);
