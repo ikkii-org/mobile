@@ -10,7 +10,6 @@ export async function createDuel(
     tokenMint: string,
     expiresInMs: number = 30 * 60 * 1000 // 30 min default
 ): Promise<Duel> {
-    // Validation
     if (!player1) {
         throw new Error("Player wallet address is required");
     }
@@ -50,6 +49,9 @@ export async function joinDuel(duelId: string, player2: string): Promise<Duel> {
     if (duel.player1 === player2) {
         throw new Error("Player cannot join their own duel");
     }
+    if (duel.expiresAt < new Date()) {
+        throw new Error("Duel has expired");
+    }
 
     duel.player2 = player2;
     duel.status = "ACTIVE";
@@ -76,7 +78,6 @@ export async function submitResult(
         throw new Error("Winner must be one of the duel participants");
     }
 
-    // Record submission
     if (player === duel.player1) {
         if (duel.player1SubmittedWinner) {
             throw new Error("Player 1 has already submitted a result");
@@ -91,17 +92,14 @@ export async function submitResult(
 
     duels.set(duel.id, duel);
 
-    // Check if both players have submitted
     if (duel.player1SubmittedWinner && duel.player2SubmittedWinner) {
         if (duel.player1SubmittedWinner === duel.player2SubmittedWinner) {
-            // Both agree → resolve immediately
             duel.winner = duel.player1SubmittedWinner;
             duel.status = "SETTLED";
             duels.set(duel.id, duel);
             // TODO: Call escrow service to pay out winner
             return { duel, resolved: true };
         } else {
-            // Disagreement → mark as disputed for API verification
             duel.status = "DISPUTED";
             duels.set(duel.id, duel);
             // TODO: Trigger verification.service to check via game API
@@ -111,6 +109,45 @@ export async function submitResult(
 
     // Waiting for other player's submission
     return { duel, resolved: false };
+}
+
+export async function cancelDuel(duelId: string, player: string): Promise<Duel> {
+    const duel = duels.get(duelId);
+    if (!duel) {
+        throw new Error("Duel not found");
+    }
+    if (duel.status !== "OPEN") {
+        throw new Error("Only open duels can be cancelled");
+    }
+    if (player !== duel.player1) {
+        throw new Error("Only the creator can cancel the duel");
+    }
+    if(duel.player2 === "") {
+        duel.status = "CANCELLED";
+        duels.set(duel.id, duel);
+        return duel;
+    }
+    throw new Error("Cannot cancel duel after another player has joined");
+}
+export async function cleanUpExpiredDuels(): Promise<number> {
+    const now = new Date();
+    let count = 0;
+    for (const duel of duels.values()) {
+        if (duel.status === "OPEN" && duel.expiresAt < now) {
+            duel.status = "CANCELLED";
+            duels.set(duel.id, duel);
+            count++;
+        }
+    }
+    return count;
+}
+
+export async function getDuel(duelId: string): Promise<Duel> {
+    const duel = duels.get(duelId);
+    if (!duel) {
+        throw new Error("Duel not found");
+    }
+    return duel;
 }
 
 // Helper for testing/debugging
