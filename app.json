@@ -6,7 +6,15 @@
     "web": {
       "output": "static"
     },
-    "name": "mobile",
-    "slug": "mobile"
+    "name": "Ikkii",
+    "slug": "Ikkii",
+    "extra": {
+      "eas": {
+        "projectId": "d2f33116-a459-4c93-967b-b845c640645e"
+      }
+    },
+    "android": {
+      "package": "com.ikkii"
+    }
   }
 }
