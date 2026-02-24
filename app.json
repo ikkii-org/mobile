@@ -6,8 +6,8 @@
     "web": {
       "output": "static"
     },
-    "name": "Ikkii",
-    "slug": "Ikkii",
+    "name": "mobile",
+    "slug": "mobile",
     "extra": {
       "eas": {
         "projectId": "d2f33116-a459-4c93-967b-b845c640645e"
