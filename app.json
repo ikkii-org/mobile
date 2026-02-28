@@ -15,6 +15,9 @@
     },
     "android": {
       "package": "com.ikkii"
-    }
+    },
+    "plugins": [
+      "expo-secure-store"
+    ]
   }
 }
