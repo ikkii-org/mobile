@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import type { Duel } from "../types";
-import { Badge } from "./ui/Badge";
 import { Avatar } from "./ui/Avatar";
 import { COMMON_TOKENS } from "../constants";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface DuelCardProps {
     duel: Duel;
     currentUsername?: string;
     onPress: () => void;
     onAction?: () => void;
+    /** "compact" for horizontal carousel cards, "full" for list/detail cards */
+    variant?: "compact" | "full";
 }
 
 function getTokenSymbol(mint: string) {
@@ -22,85 +25,395 @@ function getTimeRemaining(expiresAt: string): string {
     if (diff <= 0) return "Expired";
     const hrs = Math.floor(diff / (60 * 60 * 1000));
     const mins = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000));
-    if (hrs > 0) return `${hrs}h ${mins}m left`;
-    return `${mins}m left`;
+    if (hrs > 0) return `${hrs}h ${mins}m`;
+    return `${mins}m`;
 }
 
-function getActionLabel(duel: Duel, currentUsername?: string): string | null {
-    if (duel.status === "OPEN" && duel.player1Username !== currentUsername) return "Join";
-    if (duel.status === "ACTIVE") return "Submit Result";
-    if (duel.status === "DISPUTED") return "Verify";
-    return null;
-}
+const STATUS_GLOW_KEY: Record<string, "greenGlow" | "redGlow" | "accentGlow"> = {
+    OPEN: "accentGlow",
+    ACTIVE: "greenGlow",
+    DISPUTED: "redGlow",
+    SETTLED: "accentGlow",
+    CANCELLED: "accentGlow",
+};
 
-export function DuelCard({ duel, currentUsername, onPress, onAction }: DuelCardProps) {
+const STATUS_COLOR_KEY: Record<string, "blue" | "green" | "red" | "amber" | "grey"> = {
+    OPEN: "blue",
+    ACTIVE: "green",
+    DISPUTED: "red",
+    SETTLED: "amber",
+    CANCELLED: "grey",
+};
+
+const STATUS_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
+    OPEN: "radio-button-on",
+    ACTIVE: "flash",
+    DISPUTED: "warning",
+    SETTLED: "checkmark-circle",
+    CANCELLED: "close-circle",
+};
+
+export function DuelCard({ duel, currentUsername, onPress, onAction, variant = "full" }: DuelCardProps) {
+    const theme = useTheme();
     const [timeLeft, setTimeLeft] = useState(getTimeRemaining(duel.expiresAt));
-    const opponent =
-        duel.player1Username === currentUsername ? duel.player2Username : duel.player1Username;
-    const actionLabel = getActionLabel(duel, currentUsername);
+
+    const isMyDuel = duel.player1Username === currentUsername || duel.player2Username === currentUsername;
+    const opponent = duel.player1Username === currentUsername ? duel.player2Username : duel.player1Username;
+    const displayUser = isMyDuel ? (opponent ?? null) : duel.player1Username;
     const tokenSymbol = getTokenSymbol(duel.tokenMint);
     const isWin = duel.status === "SETTLED" && duel.winnerUsername === currentUsername;
     const isLoss = duel.status === "SETTLED" && duel.winnerUsername !== currentUsername && duel.winnerUsername !== null;
+    const isOpen = duel.status === "OPEN" && duel.player1Username !== currentUsername;
+    const isActive = duel.status === "ACTIVE";
+
+    const accentColor: string = theme[STATUS_COLOR_KEY[duel.status] ?? "grey"] as string;
+    const glowColor: string = theme[STATUS_GLOW_KEY[duel.status] ?? "accentGlow"] as string;
+    const statusIcon = STATUS_ICON[duel.status] ?? "help-circle";
 
     useEffect(() => {
         if (duel.status === "SETTLED" || duel.status === "CANCELLED") return;
-        const interval = setInterval(() => {
-            setTimeLeft(getTimeRemaining(duel.expiresAt));
-        }, 30_000);
+        const interval = setInterval(() => setTimeLeft(getTimeRemaining(duel.expiresAt)), 30_000);
         return () => clearInterval(interval);
     }, [duel.expiresAt, duel.status]);
 
+    // ─── COMPACT VARIANT ─── (carousel / grid cards — fixed width, vertical layout)
+    if (variant === "compact") {
+        return (
+            <Pressable
+                onPress={onPress}
+                style={({ pressed }) => ({
+                    width: 172,
+                    backgroundColor: theme.bgCard,
+                    borderWidth: 1,
+                    borderColor: pressed ? theme.borderGlow : theme.border,
+                    borderRadius: 16,
+                    overflow: "hidden",
+                    opacity: pressed ? 0.92 : 1,
+                    shadowColor: glowColor,
+                    shadowOpacity: pressed ? 0.5 : 0.2,
+                    shadowRadius: 12,
+                    shadowOffset: { width: 0, height: 4 },
+                    elevation: 4,
+                })}
+            >
+                {/* Status color bar */}
+                <View style={{ height: 2, backgroundColor: accentColor, opacity: 0.85 }} />
+
+                <View style={{ padding: 12 }}>
+                    {/* Top: Status icon + timer */}
+                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                            <Ionicons name={statusIcon} size={10} color={accentColor} />
+                            <Text style={{ color: accentColor, fontSize: 9, fontWeight: "800", letterSpacing: 0.8 }}>
+                                {duel.status}
+                            </Text>
+                        </View>
+                        {duel.status !== "SETTLED" && duel.status !== "CANCELLED" && (
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+                                <Ionicons name="time-outline" size={9} color={theme.textMuted} />
+                                <Text style={{ color: theme.textMuted, fontSize: 9, fontWeight: "600" }}>
+                                    {timeLeft}
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+
+                    {/* Center: Stake amount — hero number */}
+                    <View style={{ alignItems: "center", marginBottom: 10 }}>
+                        <Text style={{
+                            color: theme.textPrimary,
+                            fontSize: 24,
+                            fontWeight: "900",
+                            letterSpacing: -0.5,
+                        }}>
+                            {duel.stakeAmount}
+                        </Text>
+                        <View style={{
+                            backgroundColor: theme.accentBg,
+                            borderRadius: 6,
+                            paddingHorizontal: 6,
+                            paddingVertical: 2,
+                            marginTop: 3,
+                            borderWidth: 1,
+                            borderColor: theme.borderGlow,
+                        }}>
+                            <Text style={{ color: theme.accentLight, fontWeight: "800", fontSize: 9, letterSpacing: 0.8 }}>
+                                {tokenSymbol}
+                            </Text>
+                        </View>
+                    </View>
+
+                    {/* Players row */}
+                    {isActive && duel.player2Username ? (
+                        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 8 }}>
+                            <Avatar username={duel.player1Username} size="xs" />
+                            <Text style={{ color: theme.accentLight, fontSize: 9, fontWeight: "900" }}>VS</Text>
+                            <Avatar username={duel.player2Username} size="xs" />
+                        </View>
+                    ) : (
+                        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 8 }}>
+                            <Avatar username={displayUser ?? duel.player1Username} size="xs" />
+                            <Text
+                                style={{ color: theme.textSecondary, fontSize: 10, fontWeight: "700", maxWidth: 90 }}
+                                numberOfLines={1}
+                            >
+                                {displayUser ?? "Open..."}
+                            </Text>
+                        </View>
+                    )}
+
+                    {/* Bottom: action or result */}
+                    {isOpen && onAction && (
+                        <Pressable
+                            onPress={(e) => { e.stopPropagation(); onAction(); }}
+                            style={({ pressed }) => ({
+                                backgroundColor: pressed ? theme.accentLight : theme.accent,
+                                paddingVertical: 6,
+                                borderRadius: 8,
+                                alignItems: "center",
+                                shadowColor: theme.accentGlow,
+                                shadowOpacity: 0.6,
+                                shadowRadius: 8,
+                                shadowOffset: { width: 0, height: 2 },
+                            })}
+                        >
+                            <Text style={{ color: theme.textInverse, fontSize: 10, fontWeight: "800", letterSpacing: 0.8 }}>
+                                JOIN
+                            </Text>
+                        </Pressable>
+                    )}
+                    {isWin && (
+                        <View style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 4,
+                            backgroundColor: theme.badgeActiveBg,
+                            paddingVertical: 5,
+                            borderRadius: 8,
+                            borderWidth: 1,
+                            borderColor: theme.green + "40",
+                        }}>
+                            <Ionicons name="trophy" size={10} color={theme.green} />
+                            <Text style={{ color: theme.green, fontSize: 10, fontWeight: "800" }}>WIN</Text>
+                        </View>
+                    )}
+                    {isLoss && (
+                        <View style={{
+                            alignItems: "center",
+                            backgroundColor: theme.badgeDisputedBg,
+                            paddingVertical: 5,
+                            borderRadius: 8,
+                            borderWidth: 1,
+                            borderColor: theme.red + "40",
+                        }}>
+                            <Text style={{ color: theme.red, fontSize: 10, fontWeight: "800" }}>LOSS</Text>
+                        </View>
+                    )}
+                </View>
+            </Pressable>
+        );
+    }
+
+    // ─── FULL VARIANT ─── (list cards — horizontal layout, betting-app style)
     return (
         <Pressable
             onPress={onPress}
-            className="bg-[#1A1A2E] border border-[#2A2B45] rounded-2xl p-4 mb-3 active:opacity-80"
+            style={({ pressed }) => ({
+                backgroundColor: theme.bgCard,
+                borderWidth: 1,
+                borderColor: pressed ? theme.borderGlow : theme.border,
+                borderRadius: 16,
+                marginBottom: 10,
+                overflow: "hidden",
+                opacity: pressed ? 0.92 : 1,
+                shadowColor: glowColor,
+                shadowOpacity: pressed ? 0.4 : 0.15,
+                shadowRadius: 12,
+                shadowOffset: { width: 0, height: 3 },
+                elevation: 4,
+            })}
         >
-            {/* Top row: opponent + status */}
-            <View className="flex-row items-center justify-between mb-3">
-                <View className="flex-row items-center gap-3 flex-1">
-                    <Avatar username={opponent ?? duel.player1Username} size="sm" />
-                    <View className="flex-1">
-                        <Text className="text-white font-semibold text-sm" numberOfLines={1}>
-                            {opponent ?? "Waiting for opponent..."}
-                        </Text>
-                        {duel.status !== "SETTLED" && duel.status !== "CANCELLED" && (
-                            <Text className="text-[#64748B] text-[11px] mt-0.5">{timeLeft}</Text>
-                        )}
+            {/* Left accent stripe */}
+            <View style={{ flexDirection: "row" }}>
+                <View style={{ width: 3, backgroundColor: accentColor, opacity: 0.85 }} />
+
+                <View style={{ flex: 1, padding: 12 }}>
+                    {/* Top row: players vs layout OR single user row */}
+                    {isActive && duel.player2Username ? (
+                        /* ─── Active duel: P1 vs P2 row ─── */
+                        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
+                            {/* Player 1 */}
+                            <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 8 }}>
+                                <Avatar username={duel.player1Username} size="xs" />
+                                <Text
+                                    style={{ color: theme.textPrimary, fontWeight: "700", fontSize: 12 }}
+                                    numberOfLines={1}
+                                >
+                                    {duel.player1Username}
+                                </Text>
+                            </View>
+
+                            {/* VS chip */}
+                            <View style={{
+                                backgroundColor: theme.bgMuted,
+                                borderWidth: 1,
+                                borderColor: theme.borderGlow,
+                                borderRadius: 8,
+                                paddingHorizontal: 8,
+                                paddingVertical: 3,
+                                marginHorizontal: 6,
+                            }}>
+                                <Text style={{ color: theme.accentLight, fontWeight: "900", fontSize: 9, letterSpacing: 1.5 }}>
+                                    VS
+                                </Text>
+                            </View>
+
+                            {/* Player 2 */}
+                            <View style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
+                                <Text
+                                    style={{ color: theme.textPrimary, fontWeight: "700", fontSize: 12 }}
+                                    numberOfLines={1}
+                                >
+                                    {duel.player2Username}
+                                </Text>
+                                <Avatar username={duel.player2Username} size="xs" />
+                            </View>
+                        </View>
+                    ) : (
+                        /* ─── Non-active: single user row ─── */
+                        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
+                            <Avatar username={displayUser ?? duel.player1Username} size="xs" />
+                            <View style={{ flex: 1, marginLeft: 8 }}>
+                                <Text
+                                    style={{ color: theme.textPrimary, fontWeight: "700", fontSize: 13 }}
+                                    numberOfLines={1}
+                                >
+                                    {isMyDuel ? (displayUser ?? "Waiting...") : duel.player1Username}
+                                </Text>
+                                {!isMyDuel && !duel.player2Username && (
+                                    <Text style={{ color: theme.textMuted, fontSize: 10, fontStyle: "italic", marginTop: 1 }}>
+                                        Open challenge
+                                    </Text>
+                                )}
+                            </View>
+
+                            {/* Status chip */}
+                            <View style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                                gap: 4,
+                                backgroundColor: accentColor + "15",
+                                borderWidth: 1,
+                                borderColor: accentColor + "35",
+                                borderRadius: 100,
+                                paddingHorizontal: 8,
+                                paddingVertical: 3,
+                            }}>
+                                <Ionicons name={statusIcon} size={9} color={accentColor} />
+                                <Text style={{ color: accentColor, fontSize: 9, fontWeight: "800", letterSpacing: 0.5 }}>
+                                    {duel.status}
+                                </Text>
+                            </View>
+                        </View>
+                    )}
+
+                    {/* Bottom row: stake | timer/result | action */}
+                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                        {/* Left: stake */}
+                        <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
+                            <Text style={{ color: theme.textPrimary, fontWeight: "900", fontSize: 18, letterSpacing: -0.3 }}>
+                                {duel.stakeAmount}
+                            </Text>
+                            <View style={{
+                                backgroundColor: theme.accentBg,
+                                borderRadius: 5,
+                                paddingHorizontal: 5,
+                                paddingVertical: 1,
+                                borderWidth: 1,
+                                borderColor: theme.borderGlow,
+                            }}>
+                                <Text style={{ color: theme.accentLight, fontWeight: "800", fontSize: 9, letterSpacing: 0.5 }}>
+                                    {tokenSymbol}
+                                </Text>
+                            </View>
+                        </View>
+
+                        {/* Right: timer / result / action */}
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                            {/* Timer */}
+                            {duel.status !== "SETTLED" && duel.status !== "CANCELLED" && (
+                                <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+                                    <Ionicons name="time-outline" size={10} color={theme.textMuted} />
+                                    <Text style={{ color: theme.textMuted, fontSize: 10, fontWeight: "600" }}>
+                                        {timeLeft}
+                                    </Text>
+                                </View>
+                            )}
+
+                            {/* WIN pill */}
+                            {isWin && (
+                                <View style={{
+                                    flexDirection: "row",
+                                    alignItems: "center",
+                                    gap: 4,
+                                    backgroundColor: theme.badgeActiveBg,
+                                    paddingHorizontal: 8,
+                                    paddingVertical: 4,
+                                    borderRadius: 100,
+                                    borderWidth: 1,
+                                    borderColor: theme.green + "50",
+                                    shadowColor: theme.greenGlow,
+                                    shadowOpacity: 0.6,
+                                    shadowRadius: 6,
+                                    shadowOffset: { width: 0, height: 0 },
+                                }}>
+                                    <Ionicons name="trophy" size={10} color={theme.green} />
+                                    <Text style={{ color: theme.green, fontSize: 10, fontWeight: "800" }}>WIN</Text>
+                                </View>
+                            )}
+
+                            {/* LOSS pill */}
+                            {isLoss && (
+                                <View style={{
+                                    flexDirection: "row",
+                                    alignItems: "center",
+                                    gap: 4,
+                                    backgroundColor: theme.badgeDisputedBg,
+                                    paddingHorizontal: 8,
+                                    paddingVertical: 4,
+                                    borderRadius: 100,
+                                    borderWidth: 1,
+                                    borderColor: theme.red + "50",
+                                }}>
+                                    <Text style={{ color: theme.red, fontSize: 10, fontWeight: "800" }}>LOSS</Text>
+                                </View>
+                            )}
+
+                            {/* JOIN button */}
+                            {isOpen && onAction && (
+                                <Pressable
+                                    onPress={(e) => { e.stopPropagation(); onAction(); }}
+                                    style={({ pressed }) => ({
+                                        backgroundColor: pressed ? theme.accentLight : theme.accent,
+                                        paddingHorizontal: 14,
+                                        paddingVertical: 6,
+                                        borderRadius: 8,
+                                        shadowColor: theme.accentGlow,
+                                        shadowOpacity: pressed ? 0.7 : 0.5,
+                                        shadowRadius: 8,
+                                        shadowOffset: { width: 0, height: 2 },
+                                        elevation: 4,
+                                    })}
+                                >
+                                    <Text style={{ color: theme.textInverse, fontSize: 10, fontWeight: "800", letterSpacing: 0.8 }}>
+                                        JOIN
+                                    </Text>
+                                </Pressable>
+                            )}
+                        </View>
                     </View>
                 </View>
-                <Badge status={duel.status} />
-            </View>
-
-            {/* Bottom row: stake + action */}
-            <View className="flex-row items-center justify-between">
-                <View className="flex-row items-baseline gap-1">
-                    <Text className="text-white font-bold text-lg">{duel.stakeAmount}</Text>
-                    <Text className="text-[#8B5CF6] text-xs font-semibold">{tokenSymbol}</Text>
-                </View>
-
-                {isWin && (
-                    <View className="flex-row items-center gap-1 bg-[#064E3B] px-3 py-1.5 rounded-full border border-[#10B981]">
-                        <Text className="text-[12px]">🏆</Text>
-                        <Text className="text-[#34D399] text-xs font-bold">Won</Text>
-                    </View>
-                )}
-                {isLoss && (
-                    <View className="flex-row items-center gap-1 bg-[#7F1D1D] px-3 py-1.5 rounded-full border border-[#EF4444]">
-                        <Text className="text-[#FCA5A5] text-xs font-bold">Lost</Text>
-                    </View>
-                )}
-
-                {actionLabel && onAction && (
-                    <Pressable
-                        onPress={(e) => {
-                            e.stopPropagation();
-                            onAction();
-                        }}
-                        className="bg-[#8B5CF6] px-4 py-2 rounded-xl active:opacity-80"
-                    >
-                        <Text className="text-white text-xs font-bold">{actionLabel}</Text>
-                    </Pressable>
-                )}
             </View>
         </Pressable>
     );

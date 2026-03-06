@@ -6,12 +6,15 @@ import type {
     CreateWalletRequest,
     DepositRequest,
     Duel,
+    GameProfile,
     JoinDuelRequest,
     LeaderboardEntry,
+    LinkGameAccountRequest,
     LoginRequest,
     PlayerProfile,
     SignupRequest,
     SubmitResultRequest,
+    SyncGameProfileRequest,
     UpdatePfpRequest,
     User,
     Wallet,
@@ -63,7 +66,8 @@ async function apiFetch<T>(
     if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(
-            (body as { message?: string }).message ||
+            (body as { message?: string; error?: string }).message ||
+            (body as { error?: string }).error ||
             `Request failed (${res.status})`
         );
     }
@@ -109,6 +113,9 @@ export const usersAPI = {
 // ─── Duels ───────────────────────────────────────────────────────────────────
 
 export const duelsAPI = {
+    getByStatus: (status: string) =>
+        apiFetch<{ duels: Duel[] }>(`/duels?status=${status}`),
+
     create: (data: CreateDuelRequest) =>
         apiFetch<{ duel: Duel }>("/duels", {
             method: "POST",
@@ -204,8 +211,34 @@ export const leaderboardAPI = {
 
 export const verificationAPI = {
     verify: (duelId: string) =>
-        apiFetch<{ result: unknown }>(`/verification/duels/${duelId}`, {
+        apiFetch<{ result: { duelId: string; verified: boolean; winnerUsername: string | null; reason: string } }>(`/verification/duels/${duelId}`, {
             method: "POST",
+        }),
+};
+
+// ─── Game Profiles ───────────────────────────────────────────────────────────
+
+export const gameProfileAPI = {
+    /** Get all linked game profiles for the authenticated user */
+    getAll: () =>
+        apiFetch<{ profiles: GameProfile[] }>("/game-profiles"),
+
+    /** Get a specific game profile by game name */
+    getByGame: (gameName: string) =>
+        apiFetch<{ profile: GameProfile }>(`/game-profiles/${encodeURIComponent(gameName)}`),
+
+    /** Link an external game account */
+    link: (data: LinkGameAccountRequest) =>
+        apiFetch<{ profile: GameProfile }>("/game-profiles/link", {
+            method: "POST",
+            body: JSON.stringify(data),
+        }),
+
+    /** Sync stats from the game's API */
+    sync: (data: SyncGameProfileRequest) =>
+        apiFetch<{ profile: GameProfile }>("/game-profiles/sync", {
+            method: "POST",
+            body: JSON.stringify(data),
         }),
 };
 

@@ -1,13 +1,15 @@
 import React from "react";
 import { Text, View } from "react-native";
 import type { DuelStatus } from "../../types";
+import { useTheme } from "../../contexts/ThemeContext";
 
-const STATUS_STYLES: Record<DuelStatus, { bg: string; text: string; border: string }> = {
-    OPEN: { bg: "#1E3A5F", text: "#60A5FA", border: "#3B82F6" },
-    ACTIVE: { bg: "#064E3B", text: "#34D399", border: "#10B981" },
-    DISPUTED: { bg: "#7F1D1D", text: "#FCA5A5", border: "#EF4444" },
-    SETTLED: { bg: "#78350F", text: "#FCD34D", border: "#F59E0B" },
-    CANCELLED: { bg: "#1F2937", text: "#9CA3AF", border: "#6B7280" },
+// Text and dot colors stay fixed across themes for status clarity
+const STATUS_TEXT: Record<DuelStatus, { text: string; dot: string; label: string }> = {
+    OPEN:      { text: "#60A5FA", dot: "#3B82F6", label: "OPEN" },
+    ACTIVE:    { text: "#34D399", dot: "#10B981", label: "ACTIVE" },
+    DISPUTED:  { text: "#FCA5A5", dot: "#EF4444", label: "DISPUTED" },
+    SETTLED:   { text: "#FCD34D", dot: "#F59E0B", label: "SETTLED" },
+    CANCELLED: { text: "#6B7280", dot: "#374151", label: "CANCELLED" },
 };
 
 interface BadgeProps {
@@ -15,14 +17,50 @@ interface BadgeProps {
 }
 
 export function Badge({ status }: BadgeProps) {
-    const style = STATUS_STYLES[status];
+    const theme = useTheme();
+    const t = STATUS_TEXT[status];
+
+    const bgMap: Record<DuelStatus, string> = {
+        OPEN:      theme.badgeOpenBg,
+        ACTIVE:    theme.badgeActiveBg,
+        DISPUTED:  theme.badgeDisputedBg,
+        SETTLED:   theme.badgeSettledBg,
+        CANCELLED: theme.badgeCancelledBg,
+    };
+    const bg = bgMap[status];
+
     return (
         <View
-            className="px-3 py-1 rounded-full border self-start"
-            style={{ backgroundColor: style.bg, borderColor: style.border }}
+            style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 6,
+                backgroundColor: bg,
+                borderWidth: 1,
+                borderColor: t.dot + "55",
+                borderRadius: 100,
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                alignSelf: "flex-start",
+            }}
         >
-            <Text className="text-[10px] font-bold tracking-wider" style={{ color: style.text }}>
-                {status}
+            <View
+                style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: 3,
+                    backgroundColor: t.dot,
+                }}
+            />
+            <Text
+                style={{
+                    color: t.text,
+                    fontSize: 10,
+                    fontWeight: "700",
+                    letterSpacing: 1.2,
+                }}
+            >
+                {t.label}
             </Text>
         </View>
     );

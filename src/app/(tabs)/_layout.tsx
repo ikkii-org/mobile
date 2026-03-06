@@ -1,70 +1,118 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { View, Text } from "react-native";
+import { useTheme } from "../../contexts/ThemeContext";
+
+function TabIcon({
+    name,
+    color,
+    focused,
+    label,
+}: {
+    name: keyof typeof Ionicons.glyphMap;
+    color: string;
+    focused: boolean;
+    label: string;
+}) {
+    const theme = useTheme();
+    return (
+        <View style={{ alignItems: "center", justifyContent: "center", paddingTop: 6 }}>
+            <View
+                style={{
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 48,
+                    height: 30,
+                    borderRadius: 15,
+                    backgroundColor: focused ? theme.accentBg : "transparent",
+                    borderWidth: focused ? 1 : 0,
+                    borderColor: focused ? theme.borderGlow : "transparent",
+                    shadowColor: focused ? theme.accent : "transparent",
+                    shadowOpacity: focused ? 0.6 : 0,
+                    shadowRadius: 8,
+                    shadowOffset: { width: 0, height: 0 },
+                }}
+            >
+                <Ionicons name={name} size={22} color={color} />
+            </View>
+            <Text
+                style={{
+                    fontSize: 9,
+                    fontWeight: "700",
+                    letterSpacing: 0.8,
+                    textTransform: "uppercase",
+                    color,
+                    marginTop: 3,
+                }}
+            >
+                {label}
+            </Text>
+        </View>
+    );
+}
 
 export default function TabLayout() {
+    const theme = useTheme();
     return (
         <Tabs
             screenOptions={{
                 headerShown: false,
+                tabBarShowLabel: false,
                 tabBarStyle: {
-                    backgroundColor: "#0A0A0F",
-                    borderTopColor: "#1E2030",
+                    backgroundColor: theme.tabBarBg,
+                    borderTopColor: theme.tabBarBorder,
                     borderTopWidth: 1,
-                    height: 70,
-                    paddingBottom: 10,
-                    paddingTop: 8,
+                    height: 76,
+                    paddingBottom: 0,
+                    paddingTop: 0,
+                    paddingHorizontal: 4,
+                    elevation: 0,
+                    shadowColor: theme.accent,
+                    shadowOpacity: 0.15,
+                    shadowRadius: 20,
+                    shadowOffset: { width: 0, height: -4 },
                 },
-                tabBarActiveTintColor: "#8B5CF6",
-                tabBarInactiveTintColor: "#64748B",
-                tabBarLabelStyle: {
-                    fontSize: 10,
-                    fontWeight: "600",
-                    letterSpacing: 0.5,
-                },
+                tabBarActiveTintColor: theme.tabBarActive,
+                tabBarInactiveTintColor: theme.tabBarInactive,
             }}
         >
             <Tabs.Screen
                 name="index"
                 options={{
-                    title: "Home",
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="flash" size={size} color={color} />
+                    tabBarIcon: ({ color, focused }) => (
+                        <TabIcon name="flash" color={color} focused={focused} label="Arena" />
                     ),
                 }}
             />
             <Tabs.Screen
                 name="create"
                 options={{
-                    title: "Create",
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="add-circle" size={size + 4} color={color} />
+                    tabBarIcon: ({ color, focused }) => (
+                        <TabIcon name="add-circle" color={color} focused={focused} label="Duel" />
                     ),
                 }}
             />
             <Tabs.Screen
                 name="wallet"
                 options={{
-                    title: "Wallet",
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="wallet" size={size} color={color} />
+                    tabBarIcon: ({ color, focused }) => (
+                        <TabIcon name="wallet" color={color} focused={focused} label="Vault" />
                     ),
                 }}
             />
             <Tabs.Screen
                 name="leaderboard"
                 options={{
-                    title: "Ranks",
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="trophy" size={size} color={color} />
+                    tabBarIcon: ({ color, focused }) => (
+                        <TabIcon name="trophy" color={color} focused={focused} label="Ranks" />
                     ),
                 }}
             />
             <Tabs.Screen
                 name="profile"
                 options={{
-                    title: "Profile",
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="person" size={size} color={color} />
+                    tabBarIcon: ({ color, focused }) => (
+                        <TabIcon name="person" color={color} focused={focused} label="Profile" />
                     ),
                 }}
             />

@@ -1,6 +1,7 @@
 import React from "react";
-import { ActivityIndicator, Pressable, Text } from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import * as Haptics from "expo-haptics";
+import { useTheme } from "../../contexts/ThemeContext";
 
 interface ButtonProps {
     title: string;
@@ -10,32 +11,8 @@ interface ButtonProps {
     disabled?: boolean;
     fullWidth?: boolean;
     size?: "sm" | "md" | "lg";
+    icon?: React.ReactNode;
 }
-
-const VARIANT_CLASSES: Record<string, { container: string; text: string }> = {
-    primary: {
-        container: "bg-[#8B5CF6] active:opacity-80",
-        text: "text-white",
-    },
-    secondary: {
-        container: "bg-transparent border border-[#2A2B45] active:opacity-70",
-        text: "text-[#A78BFA]",
-    },
-    danger: {
-        container: "bg-[#7F1D1D] border border-[#EF4444] active:opacity-80",
-        text: "text-[#FCA5A5]",
-    },
-    ghost: {
-        container: "bg-transparent active:opacity-60",
-        text: "text-[#94A3B8]",
-    },
-};
-
-const SIZE_CLASSES: Record<string, { container: string; text: string }> = {
-    sm: { container: "py-2.5 px-4 rounded-xl", text: "text-xs" },
-    md: { container: "py-3.5 px-6 rounded-2xl", text: "text-sm" },
-    lg: { container: "py-4 px-8 rounded-2xl", text: "text-base" },
-};
 
 export function Button({
     title,
@@ -45,28 +22,89 @@ export function Button({
     disabled = false,
     fullWidth = true,
     size = "md",
+    icon,
 }: ButtonProps) {
-    const v = VARIANT_CLASSES[variant];
-    const s = SIZE_CLASSES[size];
+    const theme = useTheme();
 
     const handlePress = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         onPress();
     };
 
+    const sizeStyles = {
+        sm: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 12, fontSize: 11 },
+        md: { paddingVertical: 14, paddingHorizontal: 22, borderRadius: 14, fontSize: 13 },
+        lg: { paddingVertical: 16, paddingHorizontal: 28, borderRadius: 16, fontSize: 15 },
+    }[size];
+
+    const variantStyles = {
+        primary: {
+            background: theme.accent,
+            borderColor: theme.accentLight,
+            textColor: theme.textInverse,
+            shadowColor: theme.accent,
+        },
+        secondary: {
+            background: "transparent",
+            borderColor: theme.btnSecondaryBorder,
+            textColor: theme.accentLight,
+            shadowColor: "transparent",
+        },
+        danger: {
+            background: theme.btnDangerBg,
+            borderColor: theme.btnDangerBorder,
+            textColor: theme.btnDangerText,
+            shadowColor: theme.btnDangerBorder,
+        },
+        ghost: {
+            background: "transparent",
+            borderColor: "transparent",
+            textColor: theme.textMuted,
+            shadowColor: "transparent",
+        },
+    }[variant];
+
     return (
         <Pressable
             onPress={handlePress}
             disabled={disabled || loading}
-            className={`items-center justify-center flex-row ${v.container} ${s.container} ${fullWidth ? "w-full" : ""
-                } ${disabled || loading ? "opacity-50" : ""}`}
+            style={({ pressed }) => ({
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                backgroundColor: variantStyles.background,
+                borderWidth: 1,
+                borderColor: variantStyles.borderColor,
+                borderRadius: sizeStyles.borderRadius,
+                paddingVertical: sizeStyles.paddingVertical,
+                paddingHorizontal: sizeStyles.paddingHorizontal,
+                width: fullWidth ? "100%" : undefined,
+                opacity: disabled || loading ? 0.45 : pressed ? 0.78 : 1,
+                shadowColor: variantStyles.shadowColor,
+                shadowOpacity: pressed ? 0 : 0.45,
+                shadowRadius: 12,
+                shadowOffset: { width: 0, height: 4 },
+                elevation: variant === "primary" ? 6 : 0,
+            })}
         >
             {loading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
+                <ActivityIndicator size="small" color={variantStyles.textColor} />
             ) : (
-                <Text className={`font-bold tracking-wide ${v.text} ${s.text}`}>
-                    {title}
-                </Text>
+                <>
+                    {icon && <View>{icon}</View>}
+                    <Text
+                        style={{
+                            color: variantStyles.textColor,
+                            fontSize: sizeStyles.fontSize,
+                            fontWeight: "700",
+                            letterSpacing: 0.6,
+                            textTransform: "uppercase",
+                        }}
+                    >
+                        {title}
+                    </Text>
+                </>
             )}
         </Pressable>
     );

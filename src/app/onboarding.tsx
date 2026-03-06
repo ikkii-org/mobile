@@ -11,8 +11,8 @@ import {
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
 import { Button } from "../components/ui/Button";
+import { useTheme } from "../contexts/ThemeContext";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -36,6 +36,7 @@ const SLIDES = [
 
 export default function OnboardingScreen() {
     const router = useRouter();
+    const theme = useTheme();
     const [activeIndex, setActiveIndex] = useState(0);
     const scrollX = useRef(new Animated.Value(0)).current;
 
@@ -50,19 +51,21 @@ export default function OnboardingScreen() {
     };
 
     return (
-        <View className="flex-1 bg-[#0A0A0F]">
-            <StatusBar style="light" />
+        <View style={{ flex: 1, backgroundColor: theme.bg }}>
+            <StatusBar style={theme.isDark ? "light" : "dark"} />
 
             {/* Top branding */}
-            <View className="items-center pt-20 pb-4">
-                <Text className="text-5xl font-black text-white tracking-[6px]">IKKII</Text>
-                <Text className="text-[#8B5CF6] text-xs font-bold tracking-[5px] uppercase mt-2">
+            <View style={{ alignItems: "center", paddingTop: 80, paddingBottom: 16 }}>
+                <Text style={{ fontSize: 48, fontWeight: "900", color: theme.textPrimary, letterSpacing: 6 }}>
+                    IKKII
+                </Text>
+                <Text style={{ color: theme.accent, fontSize: 12, fontWeight: "700", letterSpacing: 5, textTransform: "uppercase", marginTop: 8 }}>
                     Stake · Duel · Win
                 </Text>
             </View>
 
             {/* Carousel */}
-            <View className="flex-1 justify-center">
+            <View style={{ flex: 1, justifyContent: "center" }}>
                 <FlatList
                     data={SLIDES}
                     horizontal
@@ -72,14 +75,24 @@ export default function OnboardingScreen() {
                     onMomentumScrollEnd={handleMomentumEnd}
                     keyExtractor={(_, i) => String(i)}
                     renderItem={({ item }) => (
-                        <View style={{ width: SCREEN_WIDTH }} className="items-center justify-center px-10">
-                            <View className="w-24 h-24 rounded-full bg-[#1A1A2E] border border-[#2A2B45] items-center justify-center mb-8">
-                                <Text className="text-5xl">{item.icon}</Text>
+                        <View style={{ width: SCREEN_WIDTH, alignItems: "center", justifyContent: "center", paddingHorizontal: 40 }}>
+                            <View style={{
+                                width: 96,
+                                height: 96,
+                                borderRadius: 48,
+                                backgroundColor: theme.bgCard,
+                                borderWidth: 1,
+                                borderColor: theme.borderStrong,
+                                alignItems: "center",
+                                justifyContent: "center",
+                                marginBottom: 32,
+                            }}>
+                                <Text style={{ fontSize: 48 }}>{item.icon}</Text>
                             </View>
-                            <Text className="text-white text-2xl font-bold text-center mb-4">
+                            <Text style={{ color: theme.textPrimary, fontSize: 22, fontWeight: "700", textAlign: "center", marginBottom: 16 }}>
                                 {item.title}
                             </Text>
-                            <Text className="text-[#94A3B8] text-center text-base leading-6">
+                            <Text style={{ color: theme.textSecondary, textAlign: "center", fontSize: 16, lineHeight: 24 }}>
                                 {item.desc}
                             </Text>
                         </View>
@@ -87,30 +100,35 @@ export default function OnboardingScreen() {
                 />
 
                 {/* Dots */}
-                <View className="flex-row items-center justify-center gap-2 mt-6">
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 24 }}>
                     {SLIDES.map((_, i) => (
                         <View
                             key={i}
-                            className={`h-2 rounded-full ${i === activeIndex
-                                    ? "w-8 bg-[#8B5CF6]"
-                                    : "w-2 bg-[#2A2B45]"
-                                }`}
+                            style={{
+                                height: 8,
+                                borderRadius: 4,
+                                width: i === activeIndex ? 32 : 8,
+                                backgroundColor: i === activeIndex ? theme.accent : theme.borderStrong,
+                            }}
                         />
                     ))}
                 </View>
             </View>
 
             {/* Bottom CTAs */}
-            <View className="px-6 pb-12 gap-3">
+            <View style={{ paddingHorizontal: 24, paddingBottom: 48, gap: 12 }}>
                 <Button
                     title="Get Started"
                     onPress={() => router.push("/signup")}
                     size="lg"
                 />
-                <Pressable onPress={() => router.push("/login")} className="items-center py-2">
-                    <Text className="text-[#94A3B8] text-sm">
+                <Pressable
+                    onPress={() => router.push("/login")}
+                    style={{ alignItems: "center", paddingVertical: 8 }}
+                >
+                    <Text style={{ color: theme.textSecondary, fontSize: 14 }}>
                         Already have an account?{" "}
-                        <Text className="text-[#8B5CF6] font-semibold">Log In</Text>
+                        <Text style={{ color: theme.accent, fontWeight: "600" }}>Log In</Text>
                     </Text>
                 </Pressable>
             </View>

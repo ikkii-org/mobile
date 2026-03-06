@@ -1,6 +1,6 @@
+import "react-native-get-random-values";
 import { Buffer } from "buffer";
 
 // Buffer polyfill required by @solana/web3.js
-// React Native 0.71+ with Hermes already exposes globalThis.crypto.getRandomValues
-// natively, so no additional getRandomValues polyfill is needed.
+// react-native-get-random-values provides crypto.getRandomValues() for MWA
 global.Buffer = Buffer;

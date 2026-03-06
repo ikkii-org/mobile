@@ -2,7 +2,7 @@ import type { DuelStatus } from "./types";
 
 // ─── API ─────────────────────────────────────────────────────────────────────
 
-export const API_BASE_URL = "https://api.ikkii.gg";
+export const API_BASE_URL = "http://192.168.1.43:3000/api/v1";
 
 // ─── Theme Colors ────────────────────────────────────────────────────────────
 
@@ -58,9 +58,8 @@ export const STATUS_COLORS: Record<DuelStatus, { bg: string; text: string; borde
 // ─── Common Tokens ───────────────────────────────────────────────────────────
 
 export const COMMON_TOKENS = [
-    { symbol: "SKR", name: "Solana Karrier", mint: "SKRtoken111111111111111111111111111111111111" },
+    { symbol: "USDC", name: "USD Coin", mint: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU" },
     { symbol: "SOL", name: "Solana", mint: "So11111111111111111111111111111111111111112" },
-    { symbol: "USDC", name: "USD Coin", mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" },
 ] as const;
 
 // ─── Expiration Presets ──────────────────────────────────────────────────────
@@ -85,3 +84,55 @@ export const REGEX = {
 // ─── Polling ─────────────────────────────────────────────────────────────────
 
 export const DUEL_POLL_INTERVAL_MS = 15_000;
+
+// ─── Supported Games ─────────────────────────────────────────────────────────
+
+export type GameStatus = "live" | "soon";
+
+export interface SupportedGame {
+    /** Must match the `games.name` column in the DB exactly */
+    name: string;
+    icon: string;
+    status: GameStatus;
+    /** Ionicons icon name for in-app display */
+    ionicon: string;
+    /** Placeholder text for the player ID input */
+    playerIdPlaceholder: string;
+    /** Human-friendly label for the player ID field */
+    playerIdLabel: string;
+}
+
+export const SUPPORTED_GAMES: SupportedGame[] = [
+    {
+        name: "Clash Royale",
+        icon: "https://cdn-icons-png.flaticon.com/512/588/588378.png",
+        status: "live",
+        ionicon: "shield-half-outline",
+        playerIdPlaceholder: "#ABCD1234",
+        playerIdLabel: "Player Tag",
+    },
+    {
+        name: "Valorant",
+        icon: "https://cdn-icons-png.flaticon.com/512/7455/7455025.png",
+        status: "soon",
+        ionicon: "game-controller-outline",
+        playerIdPlaceholder: "Name#TAG",
+        playerIdLabel: "Riot ID",
+    },
+    {
+        name: "CS2",
+        icon: "https://cdn-icons-png.flaticon.com/512/2503/2503508.png",
+        status: "soon",
+        ionicon: "skull-outline",
+        playerIdPlaceholder: "Steam ID / Friend Code",
+        playerIdLabel: "Steam ID",
+    },
+    {
+        name: "Apex Legends",
+        icon: "https://cdn-icons-png.flaticon.com/512/3408/3408478.png",
+        status: "soon",
+        ionicon: "rocket-outline",
+        playerIdPlaceholder: "EA ID",
+        playerIdLabel: "EA ID",
+    },
+] as const;

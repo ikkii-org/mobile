@@ -1,19 +1,21 @@
 import React, { useEffect, useRef } from "react";
 import { Animated, View, type DimensionValue } from "react-native";
+import { useTheme } from "../../contexts/ThemeContext";
 
 interface SkeletonProps {
     width?: DimensionValue;
     height?: number;
     borderRadius?: number;
-    className?: string;
+    style?: object;
 }
 
 export function Skeleton({
     width = "100%",
     height = 16,
     borderRadius = 8,
-    className = "",
+    style,
 }: SkeletonProps) {
+    const theme = useTheme();
     const opacity = useRef(new Animated.Value(0.3)).current;
 
     useEffect(() => {
@@ -36,13 +38,13 @@ export function Skeleton({
     }, [opacity]);
 
     return (
-        <View className={className}>
+        <View style={style}>
             <Animated.View
                 style={{
                     width,
                     height,
                     borderRadius,
-                    backgroundColor: "#1E2030",
+                    backgroundColor: theme.bgMuted,
                     opacity,
                 }}
             />

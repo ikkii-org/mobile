@@ -1,12 +1,12 @@
 {
   "expo": {
-    "scheme": "acme",
+    "scheme": "ikkii",
     "userInterfaceStyle": "automatic",
     "orientation": "default",
     "web": {
       "output": "static"
     },
-    "name": "mobile",
+    "name": "Ikkii",
     "slug": "mobile",
     "extra": {
       "eas": {
@@ -14,10 +14,20 @@
       }
     },
     "android": {
-      "package": "com.ikkii"
+      "package": "com.ikkii",
+      "permissions": ["android.permission.RECORD_AUDIO"]
     },
     "plugins": [
-      "expo-secure-store"
-    ]
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Ikkii to access your photos to set your profile picture."
+        }
+      ]
+    ],
+    "ios": {
+      "bundleIdentifier": "com.ikkii"
+    }
   }
 }

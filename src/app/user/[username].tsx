@@ -1,27 +1,45 @@
-import React from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import React, { useState, useEffect, useCallback } from "react";
+import { Pressable, ScrollView, Text, View, ActivityIndicator } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Card } from "../../components/ui/Card";
 import { Avatar } from "../../components/ui/Avatar";
-import { MOCK_LEADERBOARD } from "../../mockData";
+import { useTheme } from "../../contexts/ThemeContext";
+import { usersAPI, leaderboardAPI } from "../../services/api";
+import type { PlayerProfile, LeaderboardEntry } from "../../types";
 
 function StatBox({
     label,
     value,
-    color = "#FFFFFF",
+    color,
 }: {
     label: string;
     value: string;
-    color?: string;
+    color: string;
 }) {
+    const theme = useTheme();
     return (
-        <View className="flex-1 bg-[#0D0E1A] rounded-xl p-3 border border-[#1E2030] items-center">
-            <Text className="text-lg font-bold" style={{ color }}>
+        <View style={{
+            flex: 1,
+            backgroundColor: theme.bgCardAlt,
+            borderRadius: 12,
+            padding: 12,
+            borderWidth: 1,
+            borderColor: theme.border,
+            alignItems: "center",
+        }}>
+            <Text style={{ fontSize: 18, fontWeight: "700", color }}>
                 {value}
             </Text>
-            <Text className="text-[#64748B] text-[10px] uppercase tracking-wider mt-1 font-semibold">
+            <Text style={{
+                color: theme.textMuted,
+                fontSize: 10,
+                textTransform: "uppercase",
+                letterSpacing: 1.5,
+                marginTop: 4,
+                fontWeight: "600",
+            }}>
                 {label}
             </Text>
         </View>
@@ -31,94 +49,161 @@ function StatBox({
 export default function UserProfileScreen() {
     const { username } = useLocalSearchParams<{ username: string }>();
     const router = useRouter();
+    const theme = useTheme();
 
-    // TODO: Replace with real API call → usersAPI.getProfile(username)
-    const entry = MOCK_LEADERBOARD.find((e) => e.username === username);
+    const [profile, setProfile] = useState<PlayerProfile | null>(null);
+    const [rankEntry, setRankEntry] = useState<LeaderboardEntry | null>(null);
+    const [loading, setLoading] = useState(true);
 
-    if (!entry) {
+    const fetchProfile = useCallback(async () => {
+        const [profileRes, rankRes] = await Promise.allSettled([
+            usersAPI.getProfile(username),
+            leaderboardAPI.getEntry(username),
+        ]);
+        if (profileRes.status === "fulfilled") {
+            setProfile(profileRes.value.profile);
+        } else {
+            console.warn("Failed to fetch user profile:", profileRes.reason);
+        }
+        if (rankRes.status === "fulfilled") {
+            setRankEntry(rankRes.value.entry);
+        } else {
+            console.warn("Failed to fetch leaderboard entry:", rankRes.reason);
+        }
+        setLoading(false);
+    }, [username]);
+
+    useEffect(() => {
+        fetchProfile();
+    }, [fetchProfile]);
+
+    if (loading) {
         return (
-            <View className="flex-1 bg-[#0A0A0F] items-center justify-center px-6">
-                <StatusBar style="light" />
-                <Text className="text-white text-lg font-bold mb-2">Player Not Found</Text>
-                <Text className="text-[#64748B] text-sm text-center mb-6">
+            <View style={{ flex: 1, backgroundColor: theme.bg, alignItems: "center", justifyContent: "center" }}>
+                <StatusBar style={theme.isDark ? "light" : "dark"} />
+                <ActivityIndicator size="large" color={theme.accent} />
+            </View>
+        );
+    }
+
+    if (!profile) {
+        return (
+            <View style={{ flex: 1, backgroundColor: theme.bg, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 }}>
+                <StatusBar style={theme.isDark ? "light" : "dark"} />
+                <Text style={{ color: theme.textPrimary, fontSize: 18, fontWeight: "700", marginBottom: 8 }}>
+                    Player Not Found
+                </Text>
+                <Text style={{ color: theme.textMuted, fontSize: 14, textAlign: "center", marginBottom: 24 }}>
                     Could not find this player's profile.
                 </Text>
-                <Pressable onPress={() => router.back()} className="bg-[#1E2030] px-6 py-3 rounded-xl">
-                    <Text className="text-[#A78BFA] text-sm font-semibold">Go Back</Text>
+                <Pressable
+                    onPress={() => router.back()}
+                    style={{
+                        backgroundColor: theme.bgCard,
+                        paddingHorizontal: 24,
+                        paddingVertical: 12,
+                        borderRadius: 12,
+                        borderWidth: 1,
+                        borderColor: theme.border,
+                    }}
+                >
+                    <Text style={{ color: theme.accentLight, fontSize: 14, fontWeight: "600" }}>Go Back</Text>
                 </Pressable>
             </View>
         );
     }
 
-    const rankDiff = entry.previousRank - entry.currentRank;
+    const rank = rankEntry?.currentRank ?? profile.portfolio?.currentRank ?? 0;
+    const prevRank = rankEntry?.previousRank ?? profile.portfolio?.previousRank ?? 0;
+    const rankDiff = prevRank - rank;
 
     return (
-        <View className="flex-1 bg-[#0A0A0F]">
-            <StatusBar style="light" />
+        <View style={{ flex: 1, backgroundColor: theme.bg }}>
+            <StatusBar style={theme.isDark ? "light" : "dark"} />
             <ScrollView
-                className="flex-1"
-                contentContainerClassName="px-5 pt-16 pb-10"
+                style={{ flex: 1 }}
+                contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 64, paddingBottom: 40 }}
                 showsVerticalScrollIndicator={false}
             >
                 {/* Back */}
-                <Pressable onPress={() => router.back()} className="flex-row items-center gap-1 mb-6">
-                    <Ionicons name="chevron-back" size={20} color="#8B5CF6" />
-                    <Text className="text-[#8B5CF6] text-sm font-semibold">Back</Text>
+                <Pressable
+                    onPress={() => router.back()}
+                    style={{ flexDirection: "row", alignItems: "center", gap: 4, marginBottom: 24 }}
+                >
+                    <Ionicons name="chevron-back" size={20} color={theme.accent} />
+                    <Text style={{ color: theme.accent, fontSize: 14, fontWeight: "600" }}>Back</Text>
                 </Pressable>
 
                 {/* Avatar + Name */}
-                <View className="items-center mb-6">
-                    <Avatar username={entry.username} size="lg" rank={entry.rank} />
-                    <Text className="text-white text-2xl font-black mt-4">{entry.username}</Text>
-                    <View className="flex-row items-center gap-2 mt-2">
-                        <View className="bg-[#1A1A2E] px-3 py-1 rounded-full border border-[#2A2B45]">
-                            <Text className="text-[#A78BFA] text-xs font-bold">Rank #{entry.rank}</Text>
-                        </View>
-                        {rankDiff !== 0 && (
-                            <View className="flex-row items-center gap-0.5">
-                                <Ionicons
-                                    name={rankDiff > 0 ? "arrow-up" : "arrow-down"}
-                                    size={14}
-                                    color={rankDiff > 0 ? "#10B981" : "#EF4444"}
-                                />
-                                <Text
-                                    className="text-xs font-bold"
-                                    style={{ color: rankDiff > 0 ? "#10B981" : "#EF4444" }}
-                                >
-                                    {Math.abs(rankDiff)}
+                <View style={{ alignItems: "center", marginBottom: 24 }}>
+                    <Avatar username={profile.username} size="lg" rank={rank} />
+                    <Text style={{ color: theme.textPrimary, fontSize: 24, fontWeight: "900", marginTop: 16 }}>
+                        {profile.username}
+                    </Text>
+                    {rank > 0 && (
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 }}>
+                            <View style={{
+                                backgroundColor: theme.bgCard,
+                                paddingHorizontal: 12,
+                                paddingVertical: 4,
+                                borderRadius: 100,
+                                borderWidth: 1,
+                                borderColor: theme.borderStrong,
+                            }}>
+                                <Text style={{ color: theme.accentLight, fontSize: 12, fontWeight: "700" }}>
+                                    Rank #{rank}
                                 </Text>
                             </View>
-                        )}
-                    </View>
+                            {rankDiff !== 0 && (
+                                <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+                                    <Ionicons
+                                        name={rankDiff > 0 ? "arrow-up" : "arrow-down"}
+                                        size={14}
+                                        color={rankDiff > 0 ? theme.green : theme.red}
+                                    />
+                                    <Text style={{
+                                        fontSize: 12,
+                                        fontWeight: "700",
+                                        color: rankDiff > 0 ? theme.green : theme.red,
+                                    }}>
+                                        {Math.abs(rankDiff)}
+                                    </Text>
+                                </View>
+                            )}
+                        </View>
+                    )}
                 </View>
 
                 {/* Win Rate */}
-                <Card className="mb-4">
-                    <View className="items-center py-2">
-                        <Text className="text-white text-3xl font-black">
-                            {entry.winPercentage.toFixed(1)}%
+                <Card style={{ marginBottom: 16 }}>
+                    <View style={{ alignItems: "center", paddingVertical: 8 }}>
+                        <Text style={{ color: theme.textPrimary, fontSize: 32, fontWeight: "900" }}>
+                            {profile.winPercentage.toFixed(1)}%
                         </Text>
-                        <Text className="text-[#64748B] text-xs mt-1">Win Rate</Text>
+                        <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 4 }}>Win Rate</Text>
                     </View>
                 </Card>
 
                 {/* Stats */}
-                <View className="flex-row gap-3 mb-3">
-                    <StatBox label="Wins" value={String(entry.wins)} color="#10B981" />
-                    <StatBox label="Losses" value={String(entry.losses)} color="#EF4444" />
+                <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
+                    <StatBox label="Wins" value={String(profile.wins)} color={theme.green} />
+                    <StatBox label="Losses" value={String(profile.losses)} color={theme.red} />
                 </View>
-                <View className="flex-row gap-3 mb-6">
-                    <StatBox
-                        label="Total Won"
-                        value={entry.totalStakeWon.toLocaleString()}
-                        color="#10B981"
-                    />
-                    <StatBox
-                        label="Total Lost"
-                        value={entry.totalStakeLost.toLocaleString()}
-                        color="#EF4444"
-                    />
-                </View>
+
+                {(profile.portfolio || rankEntry) && (
+                    <View style={{ flexDirection: "row", gap: 12, marginBottom: 24 }}>
+                        <StatBox
+                            label="Total Won"
+                            value={(rankEntry?.totalStakeWon ?? profile.portfolio?.totalStakeWon ?? 0).toLocaleString()}
+                            color={theme.green}
+                        />
+                        <StatBox
+                            label="Total Lost"
+                            value={(rankEntry?.totalStakeLost ?? profile.portfolio?.totalStakeLost ?? 0).toLocaleString()}
+                            color={theme.red}
+                        />
+                    </View>
+                )}
             </ScrollView>
         </View>
     );

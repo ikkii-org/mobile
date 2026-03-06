@@ -1,6 +1,7 @@
 import React from "react";
 import { Modal as RNModal, Pressable, Text, View } from "react-native";
 import { Button } from "./Button";
+import { useTheme } from "../../contexts/ThemeContext";
 
 interface ModalProps {
     visible: boolean;
@@ -25,6 +26,7 @@ export function Modal({
     confirmVariant = "primary",
     loading = false,
 }: ModalProps) {
+    const theme = useTheme();
     return (
         <RNModal
             visible={visible}
@@ -34,17 +36,32 @@ export function Modal({
             statusBarTranslucent
         >
             <Pressable
-                className="flex-1 bg-black/70 items-center justify-center px-6"
+                style={{
+                    flex: 1,
+                    backgroundColor: theme.overlay,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    paddingHorizontal: 24,
+                }}
                 onPress={onClose}
             >
                 <Pressable
-                    className="w-full bg-[#1A1A2E] border border-[#2A2B45] rounded-3xl p-6"
+                    style={{
+                        width: "100%",
+                        backgroundColor: theme.bgCard,
+                        borderWidth: 1,
+                        borderColor: theme.borderStrong,
+                        borderRadius: 24,
+                        padding: 24,
+                    }}
                     onPress={(e) => e.stopPropagation()}
                 >
-                    <Text className="text-white text-xl font-bold mb-4">{title}</Text>
+                    <Text style={{ color: theme.textPrimary, fontSize: 20, fontWeight: "700", marginBottom: 16 }}>
+                        {title}
+                    </Text>
                     {children}
-                    <View className="flex-row gap-3 mt-6">
-                        <View className="flex-1">
+                    <View style={{ flexDirection: "row", gap: 12, marginTop: 24 }}>
+                        <View style={{ flex: 1 }}>
                             <Button
                                 title={cancelText}
                                 onPress={onClose}
@@ -53,7 +70,7 @@ export function Modal({
                             />
                         </View>
                         {confirmText && onConfirm && (
-                            <View className="flex-1">
+                            <View style={{ flex: 1 }}>
                                 <Button
                                     title={confirmText}
                                     onPress={onConfirm}

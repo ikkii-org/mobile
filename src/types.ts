@@ -31,6 +31,34 @@ export interface PlayerProfile {
     portfolio: PlayerPortfolio | null;
 }
 
+// ─── Game ────────────────────────────────────────────────────────────────────
+
+export interface Game {
+    id: string;
+    name: string;
+    icon: string | null;
+    apiBaseUrl: string | null;
+}
+
+export interface GameProfile {
+    id: string;
+    userId: string;
+    gameId: string;
+    gameName: string;
+    playerId: string | null;
+    rank: string | null;
+    stats: Record<string, unknown> | null;
+}
+
+export interface LinkGameAccountRequest {
+    gameName: string;
+    playerId: string;
+}
+
+export interface SyncGameProfileRequest {
+    gameName: string;
+}
+
 // ─── Duel ────────────────────────────────────────────────────────────────────
 
 export type DuelStatus = "OPEN" | "ACTIVE" | "DISPUTED" | "SETTLED" | "CANCELLED";
@@ -49,6 +77,9 @@ export interface Duel {
     stakeAmount: number;
     tokenMint: string;
     gameId: string | null;
+    player1GameProfileId: string | null;
+    player2GameProfileId: string | null;
+    txSignature: string | null;
     expiresAt: string;
     createdAt: string;
 }
@@ -113,14 +144,18 @@ export interface LoginRequest {
 
 export interface CreateDuelRequest {
     username: string;
-    stakeAmount: number;
+    stakeAmount: number;          // human-readable (e.g. 1.0 USDC) — stored in DB
+    stakeAmountSmallest: number;  // smallest unit (e.g. 1000000 micro-USDC) — used for on-chain verification
     tokenMint: string;
     gameId?: string;
     expiresInMs?: number;
+    txSignature: string;
+    duelId: string;
 }
 
 export interface JoinDuelRequest {
     username: string;
+    txSignature: string;
 }
 
 export interface SubmitResultRequest {
@@ -130,6 +165,7 @@ export interface SubmitResultRequest {
 
 export interface CancelDuelRequest {
     username: string;
+    txSignature: string;
 }
 
 export interface DepositRequest {

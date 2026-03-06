@@ -1,18 +1,16 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { Image, Text, View } from "react-native";
+import { useTheme } from "../../contexts/ThemeContext";
 
 interface AvatarProps {
     username: string;
     pfp?: string | null;
-    size?: "sm" | "md" | "lg";
+    size?: "xs" | "sm" | "md" | "lg";
     rank?: number;
 }
 
-const SIZE_MAP = {
-    sm: { container: "w-8 h-8 rounded-full", text: "text-xs" },
-    md: { container: "w-11 h-11 rounded-full", text: "text-sm" },
-    lg: { container: "w-20 h-20 rounded-full", text: "text-2xl" },
-};
+const SIZE_PX = { xs: 24, sm: 32, md: 44, lg: 80 };
+const FONT_SIZE = { xs: 9, sm: 12, md: 14, lg: 24 };
 
 const AVATAR_COLORS = [
     "#8B5CF6", "#06B6D4", "#10B981", "#F59E0B",
@@ -31,27 +29,50 @@ function getInitials(username: string) {
     return username.slice(0, 2).toUpperCase();
 }
 
-export function Avatar({ username, size = "md", rank }: AvatarProps) {
-    const s = SIZE_MAP[size];
+export function Avatar({ username, pfp, size = "md", rank }: AvatarProps) {
+    const theme = useTheme();
+    const px = SIZE_PX[size];
+    const fontSize = FONT_SIZE[size];
     const bg = getColor(username);
 
     return (
-        <View className="relative">
-            <View
-                className={`${s.container} items-center justify-center`}
-                style={{ backgroundColor: bg }}
-            >
-                <Text className={`text-white font-bold ${s.text}`}>
-                    {getInitials(username)}
-                </Text>
-            </View>
-            {rank && rank <= 3 && (
-                <View className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#0A0A0F] items-center justify-center">
-                    <Text className="text-[10px]">
-                        {rank === 1 ? "🥇" : rank === 2 ? "🥈" : "🥉"}
-                    </Text>
+        <View style={{ position: "relative" }}>
+            {pfp ? (
+                <Image
+                    source={{ uri: pfp }}
+                    style={{ width: px, height: px, borderRadius: px / 2 }}
+                />
+            ) : (
+                <View
+                    style={{
+                        width: px,
+                        height: px,
+                        borderRadius: px / 2,
+                        backgroundColor: bg,
+                        alignItems: "center",
+                        justifyContent: "center",
+                    }}
+                >
+                    <Text style={{ color: theme.textInverse, fontWeight: "700", fontSize }}>{getInitials(username)}</Text>
                 </View>
             )}
+            {rank && rank <= 3 ? (
+                <View
+                    style={{
+                        position: "absolute",
+                        bottom: -4,
+                        right: -4,
+                        width: 20,
+                        height: 20,
+                        borderRadius: 10,
+                        backgroundColor: theme.bg,
+                        alignItems: "center",
+                        justifyContent: "center",
+                    }}
+                >
+                    <Text style={{ fontSize: 10 }}>{rank === 1 ? "🥇" : rank === 2 ? "🥈" : "🥉"}</Text>
+                </View>
+            ) : null}
         </View>
     );
 }
