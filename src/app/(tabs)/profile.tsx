@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Alert, Pressable, ScrollView, Text, View, ActivityIndicator } from "react-native";
+import { Alert, Image, Pressable, ScrollView, Text, View, ActivityIndicator } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import * as ImagePicker from "expo-image-picker";
 import { Avatar } from "../../components/ui/Avatar";
+import { Card } from "../../components/ui/Card";
 import { Modal } from "../../components/ui/Modal";
 import { Input } from "../../components/ui/Input";
 import { useToast } from "../../contexts/ToastContext";
@@ -14,6 +15,7 @@ import { useWallet } from "../../components/WalletProvider";
 import { useTheme } from "../../contexts/ThemeContext";
 import { usersAPI, gameProfileAPI } from "../../services/api";
 import { SUPPORTED_GAMES } from "../../constants";
+import { GAME_ICONS } from "../../assets/games";
 import type { PlayerProfile, GameProfile } from "../../types";
 
 export default function ProfileScreen() {
@@ -186,17 +188,15 @@ export default function ProfileScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 {/* ═══ PROFILE HERO BANNER ═══ */}
-                <View style={{
-                    backgroundColor: theme.bgGlass,
-                    marginHorizontal: 20,
-                    marginTop: 64,
-                    borderRadius: 22,
-                    borderWidth: 1,
-                    borderColor: theme.borderStrong,
-                    overflow: "hidden",
-                }}>
-                    {/* Gradient-like accent bar */}
-                    <View style={{ height: 3, backgroundColor: theme.accent }} />
+                <Card
+                    noPadding
+                    style={{
+                        backgroundColor: theme.bgGlass,
+                        marginHorizontal: 20,
+                        marginTop: 64,
+                        borderColor: theme.borderNeon,
+                    }}
+                >
 
                     {/* Top section: avatar left, name + wallet right */}
                     <View style={{ flexDirection: "row", padding: 18, paddingBottom: 14 }}>
@@ -209,11 +209,7 @@ export default function ProfileScreen() {
                                 borderRadius: 40,
                                 padding: 2,
                                 borderWidth: 2,
-                                borderColor: theme.borderGlow,
-                                shadowColor: theme.accentGlow,
-                                shadowOpacity: 0.6,
-                                shadowRadius: 12,
-                                shadowOffset: { width: 0, height: 0 },
+                                borderColor: theme.borderNeon,
                             }}>
                                 <Avatar username={user.username} size="lg" rank={currentRank} pfp={profile.pfp} />
                             </View>
@@ -224,16 +220,12 @@ export default function ProfileScreen() {
                                 right: 0,
                                 width: 24,
                                 height: 24,
-                                borderRadius: 12,
+                                borderRadius: 7,
                                 backgroundColor: theme.accent,
                                 alignItems: "center",
                                 justifyContent: "center",
                                 borderWidth: 2,
                                 borderColor: theme.bgGlass,
-                                shadowColor: theme.accentGlow,
-                                shadowOpacity: 0.5,
-                                shadowRadius: 4,
-                                shadowOffset: { width: 0, height: 1 },
                             }}>
                                 {avatarLoading ? (
                                     <ActivityIndicator size={10} color={theme.textInverse} />
@@ -264,17 +256,17 @@ export default function ProfileScreen() {
                                     backgroundColor: theme.bgMuted,
                                     paddingHorizontal: 10,
                                     paddingVertical: 5,
-                                    borderRadius: 100,
+                                    borderRadius: 6,
                                     borderWidth: 1,
-                                    borderColor: theme.borderStrong,
+                                    borderColor: theme.border,
                                 }}
                             >
-                                <Text style={{ color: theme.textMuted, fontSize: 10, fontFamily: "monospace" }}>
+                                <Text style={{ color: theme.textMuted, fontSize: 10, fontFamily: "monospace", letterSpacing: 0.5 }}>
                                     {user.walletKey.slice(0, 5)}…{user.walletKey.slice(-4)}
                                 </Text>
                                 <Ionicons name="copy-outline" size={10} color={theme.textMuted} />
                             </Pressable>
-                            <Text style={{ color: theme.textMuted, fontSize: 10, marginTop: 6 }}>
+                            <Text style={{ color: theme.textMuted, fontSize: 10, marginTop: 6, letterSpacing: 0.3 }}>
                                 Member since {new Date(user.createdAt).toLocaleDateString()}
                             </Text>
                         </View>
@@ -285,14 +277,14 @@ export default function ProfileScreen() {
                         <View style={{
                             flexDirection: "row",
                             borderTopWidth: 1,
-                            borderTopColor: theme.border,
+                            borderTopColor: theme.divider,
                             marginHorizontal: 18,
                             paddingVertical: 14,
                         }}>
                             {/* Rank */}
                             <View style={{ flex: 1, alignItems: "center" }}>
                                 <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
-                                    <Text style={{ color: theme.accentLight, fontSize: 22, fontWeight: "900" }}>
+                                    <Text style={{ color: theme.accentLight, fontSize: 22, fontWeight: "900", letterSpacing: -0.5 }}>
                                         #{currentRank}
                                     </Text>
                                     {rankDiff !== 0 && (
@@ -312,37 +304,37 @@ export default function ProfileScreen() {
                                     )}
                                 </View>
                                 <Text style={{
-                                    color: theme.textMuted, fontSize: 8, letterSpacing: 1.2,
+                                    color: theme.textMuted, fontSize: 8, letterSpacing: 2,
                                     textTransform: "uppercase", marginTop: 2, fontWeight: "700",
                                 }}>
                                     Rank
                                 </Text>
                             </View>
 
-                            <View style={{ width: 1, height: 32, backgroundColor: theme.border, alignSelf: "center" }} />
+                            <View style={{ width: 1, height: 32, backgroundColor: theme.divider, alignSelf: "center" }} />
 
                             {/* Win rate */}
                             <View style={{ flex: 1, alignItems: "center" }}>
-                                <Text style={{ color: theme.textPrimary, fontSize: 22, fontWeight: "900" }}>
+                                <Text style={{ color: theme.textPrimary, fontSize: 22, fontWeight: "900", letterSpacing: -0.5 }}>
                                     {profile.winPercentage.toFixed(1)}%
                                 </Text>
                                 <Text style={{
-                                    color: theme.textMuted, fontSize: 8, letterSpacing: 1.2,
+                                    color: theme.textMuted, fontSize: 8, letterSpacing: 2,
                                     textTransform: "uppercase", marginTop: 2, fontWeight: "700",
                                 }}>
                                     Win Rate
                                 </Text>
                             </View>
 
-                            <View style={{ width: 1, height: 32, backgroundColor: theme.border, alignSelf: "center" }} />
+                            <View style={{ width: 1, height: 32, backgroundColor: theme.divider, alignSelf: "center" }} />
 
                             {/* Total duels */}
                             <View style={{ flex: 1, alignItems: "center" }}>
-                                <Text style={{ color: theme.textPrimary, fontSize: 22, fontWeight: "900" }}>
+                                <Text style={{ color: theme.textPrimary, fontSize: 22, fontWeight: "900", letterSpacing: -0.5 }}>
                                     {totalDuels}
                                 </Text>
                                 <Text style={{
-                                    color: theme.textMuted, fontSize: 8, letterSpacing: 1.2,
+                                    color: theme.textMuted, fontSize: 8, letterSpacing: 2,
                                     textTransform: "uppercase", marginTop: 2, fontWeight: "700",
                                 }}>
                                     Duels
@@ -350,61 +342,56 @@ export default function ProfileScreen() {
                             </View>
                         </View>
                     )}
-                </View>
+                </Card>
 
                 {/* ═══ PERFORMANCE DASHBOARD ═══ */}
                 <View style={{ paddingHorizontal: 20, marginTop: 18 }}>
+                    {/* SectionHeader: bar + dot */}
                     <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-                        <View style={{
-                            width: 6, height: 6, borderRadius: 3, backgroundColor: theme.accent,
-                            shadowColor: theme.accentGlow, shadowOpacity: 0.9, shadowRadius: 6,
-                            shadowOffset: { width: 0, height: 0 }, marginRight: 8,
-                        }} />
+                        <View style={{ width: 12, height: 2, backgroundColor: theme.accent, borderRadius: 1, marginRight: 4 }} />
+                        <View style={{ width: 4, height: 4, borderRadius: 1, backgroundColor: theme.accent, marginRight: 8 }} />
                         <Text style={{
-                            color: theme.textPrimary, fontSize: 12, fontWeight: "800",
-                            letterSpacing: 1.2, textTransform: "uppercase",
+                            color: theme.textPrimary, fontSize: 11, fontWeight: "800",
+                            letterSpacing: 2, textTransform: "uppercase",
                         }}>
                             Performance
                         </Text>
                     </View>
 
                     {/* Win/Loss bar */}
-                    <View style={{
-                        backgroundColor: theme.bgCard,
-                        borderRadius: 14,
-                        borderWidth: 1,
-                        borderColor: theme.border,
+                    <Card noFill style={{
+                        borderRadius: 12,
                         padding: 14,
                         marginBottom: 10,
                     }}>
-                        {/* W/L visual bar */}
-                        <View style={{ flexDirection: "row", height: 6, borderRadius: 3, overflow: "hidden", marginBottom: 10 }}>
+                        {/* W/L visual bar — sharper corners */}
+                        <View style={{ flexDirection: "row", height: 6, borderRadius: 2, overflow: "hidden", marginBottom: 10 }}>
                             <View style={{
                                 flex: profile.wins || 0.5,
                                 backgroundColor: theme.green,
-                                borderTopLeftRadius: 3,
-                                borderBottomLeftRadius: 3,
+                                borderTopLeftRadius: 2,
+                                borderBottomLeftRadius: 2,
                             }} />
                             <View style={{
                                 flex: profile.losses || 0.5,
                                 backgroundColor: theme.red,
-                                borderTopRightRadius: 3,
-                                borderBottomRightRadius: 3,
+                                borderTopRightRadius: 2,
+                                borderBottomRightRadius: 2,
                             }} />
                         </View>
                         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: theme.green }} />
-                                <Text style={{ color: theme.textSecondary, fontSize: 11 }}>Wins</Text>
+                                <View style={{ width: 6, height: 6, borderRadius: 1, backgroundColor: theme.green }} />
+                                <Text style={{ color: theme.textSecondary, fontSize: 10, fontWeight: "700", letterSpacing: 0.5, textTransform: "uppercase" }}>Wins</Text>
                                 <Text style={{ color: theme.green, fontSize: 13, fontWeight: "900" }}>{profile.wins}</Text>
                             </View>
                             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: theme.red }} />
-                                <Text style={{ color: theme.textSecondary, fontSize: 11 }}>Losses</Text>
+                                <View style={{ width: 6, height: 6, borderRadius: 1, backgroundColor: theme.red }} />
+                                <Text style={{ color: theme.textSecondary, fontSize: 10, fontWeight: "700", letterSpacing: 0.5, textTransform: "uppercase" }}>Losses</Text>
                                 <Text style={{ color: theme.red, fontSize: 13, fontWeight: "900" }}>{profile.losses}</Text>
                             </View>
                         </View>
-                    </View>
+                    </Card>
 
                     {/* Stats grid: 2x2 */}
                     {profile.portfolio && (
@@ -435,37 +422,41 @@ export default function ProfileScreen() {
                                     icon: "wallet-outline" as keyof typeof Ionicons.glyphMap,
                                 },
                             ].map((stat) => (
-                                <View
+                                <Card
                                     key={stat.label}
+                                    noFill
+                                    noPadding
                                     style={{
                                         width: "48%",
-                                        backgroundColor: theme.bgCard,
-                                        borderRadius: 14,
-                                        padding: 14,
-                                        borderWidth: 1,
-                                        borderColor: theme.border,
+                                        borderRadius: 12,
                                     }}
                                 >
-                                    <View style={{
-                                        width: 28, height: 28, borderRadius: 8,
-                                        backgroundColor: stat.color + "18", borderWidth: 1,
-                                        borderColor: stat.color + "30", alignItems: "center",
-                                        justifyContent: "center", marginBottom: 8,
-                                    }}>
-                                        <Ionicons name={stat.icon} size={14} color={stat.color} />
+                                    {/* Top accent line */}
+                                    <View style={{ alignItems: "center" }}>
+                                        <View style={{ width: "40%", height: 2, backgroundColor: stat.color + "50", borderBottomLeftRadius: 1, borderBottomRightRadius: 1 }} />
                                     </View>
-                                    <Text style={{
-                                        fontSize: 16, fontWeight: "900", color: stat.color, letterSpacing: -0.3,
-                                    }}>
-                                        {stat.value}
-                                    </Text>
-                                    <Text style={{
-                                        color: theme.textMuted, fontSize: 9, textTransform: "uppercase",
-                                        letterSpacing: 1.2, marginTop: 3, fontWeight: "700",
-                                    }}>
-                                        {stat.label}
-                                    </Text>
-                                </View>
+                                    <View style={{ padding: 14 }}>
+                                        <View style={{
+                                            width: 28, height: 28, borderRadius: 7,
+                                            backgroundColor: stat.color + "18", borderWidth: 1,
+                                            borderColor: stat.color + "30", alignItems: "center",
+                                            justifyContent: "center", marginBottom: 8,
+                                        }}>
+                                            <Ionicons name={stat.icon} size={14} color={stat.color} />
+                                        </View>
+                                        <Text style={{
+                                            fontSize: 16, fontWeight: "900", color: stat.color, letterSpacing: -0.5,
+                                        }}>
+                                            {stat.value}
+                                        </Text>
+                                        <Text style={{
+                                            color: theme.textMuted, fontSize: 9, textTransform: "uppercase",
+                                            letterSpacing: 2, marginTop: 3, fontWeight: "700",
+                                        }}>
+                                            {stat.label}
+                                        </Text>
+                                    </View>
+                                </Card>
                             ))}
                         </View>
                     )}
@@ -473,27 +464,26 @@ export default function ProfileScreen() {
 
                 {/* ═══ GAME ACCOUNTS SECTION ═══ */}
                 <View style={{ paddingHorizontal: 20, marginTop: 18 }}>
+                    {/* SectionHeader: bar + dot */}
                     <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-                        <View style={{
-                            width: 6, height: 6, borderRadius: 3, backgroundColor: theme.accent,
-                            shadowColor: theme.accentGlow, shadowOpacity: 0.9, shadowRadius: 6,
-                            shadowOffset: { width: 0, height: 0 }, marginRight: 8,
-                        }} />
+                        <View style={{ width: 12, height: 2, backgroundColor: theme.accent, borderRadius: 1, marginRight: 4 }} />
+                        <View style={{ width: 4, height: 4, borderRadius: 1, backgroundColor: theme.accent, marginRight: 8 }} />
                         <Text style={{
-                            color: theme.textPrimary, fontSize: 12, fontWeight: "800",
-                            letterSpacing: 1.2, textTransform: "uppercase",
+                            color: theme.textPrimary, fontSize: 11, fontWeight: "800",
+                            letterSpacing: 2, textTransform: "uppercase",
                         }}>
                             Game Accounts
                         </Text>
                     </View>
 
                     {gameProfilesLoading ? (
-                        <View style={{
-                            backgroundColor: theme.bgCard, borderRadius: 14, borderWidth: 1,
-                            borderColor: theme.border, padding: 24, alignItems: "center",
+                        <Card noFill style={{
+                            borderRadius: 12,
+                            padding: 24,
+                            alignItems: "center",
                         }}>
                             <ActivityIndicator size="small" color={theme.accent} />
-                        </View>
+                        </Card>
                     ) : (
                         <View style={{ gap: 8 }}>
                             {SUPPORTED_GAMES.map((game) => {
@@ -501,18 +491,23 @@ export default function ProfileScreen() {
                                 const isLive = game.status === "live";
                                 const isSyncing = syncingGame === game.name;
 
-                                return (
-                                    <View
+                                    return (
+                                    <Card
                                         key={game.name}
+                                        noFill
+                                        noPadding
                                         style={{
-                                            backgroundColor: theme.bgCard,
-                                            borderRadius: 14,
-                                            borderWidth: 1,
-                                            borderColor: linked ? theme.borderGlow : theme.border,
-                                            overflow: "hidden",
+                                            borderRadius: 12,
+                                            borderColor: linked ? theme.borderNeon : theme.border,
                                             opacity: isLive ? 1 : 0.5,
                                         }}
                                     >
+                                        {/* Top accent line for linked games */}
+                                        {linked && (
+                                            <View style={{ alignItems: "center" }}>
+                                                <View style={{ width: "30%", height: 2, backgroundColor: theme.accentNeon, borderBottomLeftRadius: 1, borderBottomRightRadius: 1 }} />
+                                            </View>
+                                        )}
                                         <View style={{
                                             flexDirection: "row",
                                             alignItems: "center",
@@ -520,37 +515,46 @@ export default function ProfileScreen() {
                                         }}>
                                             {/* Game icon */}
                                             <View style={{
-                                                width: 36, height: 36, borderRadius: 10,
+                                                width: 36, height: 36, borderRadius: 8,
                                                 backgroundColor: linked ? theme.accent + "18" : theme.bgMuted,
                                                 borderWidth: 1,
-                                                borderColor: linked ? theme.accent + "30" : theme.borderStrong,
+                                                borderColor: linked ? theme.accent + "30" : theme.border,
                                                 alignItems: "center", justifyContent: "center", marginRight: 12,
+                                                overflow: "hidden",
                                             }}>
-                                                <Ionicons
-                                                    name={game.ionicon as keyof typeof Ionicons.glyphMap}
-                                                    size={16}
-                                                    color={linked ? theme.accentLight : theme.textMuted}
-                                                />
+                                                {GAME_ICONS[game.name] ? (
+                                                    <Image
+                                                        source={GAME_ICONS[game.name]}
+                                                        style={{ width: 28, height: 28, borderRadius: 4 }}
+                                                        resizeMode="contain"
+                                                    />
+                                                ) : (
+                                                    <Ionicons
+                                                        name={game.ionicon as keyof typeof Ionicons.glyphMap}
+                                                        size={16}
+                                                        color={linked ? theme.accentLight : theme.textMuted}
+                                                    />
+                                                )}
                                             </View>
 
                                             {/* Game info */}
                                             <View style={{ flex: 1 }}>
                                                 <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                                                     <Text style={{
-                                                        color: theme.textPrimary, fontSize: 13, fontWeight: "700",
+                                                        color: theme.textPrimary, fontSize: 13, fontWeight: "800", letterSpacing: 0.3,
                                                     }}>
                                                         {game.name}
                                                     </Text>
                                                     {!isLive && (
                                                         <View style={{
                                                             backgroundColor: theme.amber + "20",
-                                                            borderRadius: 6,
+                                                            borderRadius: 4,
                                                             paddingHorizontal: 5,
                                                             paddingVertical: 1,
                                                             borderWidth: 1,
                                                             borderColor: theme.amber + "40",
                                                         }}>
-                                                            <Text style={{ color: theme.amber, fontSize: 7, fontWeight: "800", letterSpacing: 0.5 }}>
+                                                            <Text style={{ color: theme.amber, fontSize: 7, fontWeight: "900", letterSpacing: 1 }}>
                                                                 SOON
                                                             </Text>
                                                         </View>
@@ -573,7 +577,7 @@ export default function ProfileScreen() {
                                                         })()}
                                                     </View>
                                                 ) : (
-                                                    <Text style={{ color: theme.textMuted, fontSize: 10, marginTop: 2 }}>
+                                                    <Text style={{ color: theme.textMuted, fontSize: 10, marginTop: 2, letterSpacing: 0.3 }}>
                                                         {isLive ? "Not linked" : "Coming soon"}
                                                     </Text>
                                                 )}
@@ -587,10 +591,10 @@ export default function ProfileScreen() {
                                                             onPress={() => handleSyncGame(game.name)}
                                                             disabled={isSyncing}
                                                             style={{
-                                                                width: 30, height: 30, borderRadius: 8,
+                                                                width: 30, height: 30, borderRadius: 7,
                                                                 backgroundColor: theme.accentBg,
                                                                 borderWidth: 1,
-                                                                borderColor: theme.borderGlow,
+                                                                borderColor: theme.borderNeon,
                                                                 alignItems: "center", justifyContent: "center",
                                                             }}
                                                         >
@@ -604,10 +608,10 @@ export default function ProfileScreen() {
                                                     <Pressable
                                                         onPress={() => handleOpenLinkModal(game.name)}
                                                         style={{
-                                                            width: 30, height: 30, borderRadius: 8,
+                                                            width: 30, height: 30, borderRadius: 7,
                                                             backgroundColor: linked ? theme.bgMuted : theme.accent + "20",
                                                             borderWidth: 1,
-                                                            borderColor: linked ? theme.borderStrong : theme.accent + "40",
+                                                            borderColor: linked ? theme.border : theme.accent + "40",
                                                             alignItems: "center", justifyContent: "center",
                                                         }}
                                                     >
@@ -620,7 +624,7 @@ export default function ProfileScreen() {
                                                 </View>
                                             )}
                                         </View>
-                                    </View>
+                                    </Card>
                                 );
                             })}
                         </View>
@@ -629,15 +633,13 @@ export default function ProfileScreen() {
 
                 {/* ═══ SETTINGS SECTION ═══ */}
                 <View style={{ paddingHorizontal: 20, marginTop: 22 }}>
+                    {/* SectionHeader: bar + dot */}
                     <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-                        <View style={{
-                            width: 6, height: 6, borderRadius: 3, backgroundColor: theme.accent,
-                            shadowColor: theme.accentGlow, shadowOpacity: 0.9, shadowRadius: 6,
-                            shadowOffset: { width: 0, height: 0 }, marginRight: 8,
-                        }} />
+                        <View style={{ width: 12, height: 2, backgroundColor: theme.accent, borderRadius: 1, marginRight: 4 }} />
+                        <View style={{ width: 4, height: 4, borderRadius: 1, backgroundColor: theme.accent, marginRight: 8 }} />
                         <Text style={{
-                            color: theme.textPrimary, fontSize: 12, fontWeight: "800",
-                            letterSpacing: 1.2, textTransform: "uppercase",
+                            color: theme.textPrimary, fontSize: 11, fontWeight: "800",
+                            letterSpacing: 2, textTransform: "uppercase",
                         }}>
                             Settings
                         </Text>
@@ -650,7 +652,7 @@ export default function ProfileScreen() {
                             flexDirection: "row",
                             alignItems: "center",
                             backgroundColor: theme.btnDangerBg,
-                            borderRadius: 14,
+                            borderRadius: 12,
                             borderWidth: 1,
                             borderColor: theme.btnDangerBorder + "30",
                             paddingHorizontal: 14,
@@ -658,7 +660,7 @@ export default function ProfileScreen() {
                         }}
                     >
                         <View style={{
-                            width: 30, height: 30, borderRadius: 8,
+                            width: 30, height: 30, borderRadius: 7,
                             backgroundColor: theme.red + "18", borderWidth: 1,
                             borderColor: theme.red + "30", alignItems: "center",
                             justifyContent: "center", marginRight: 10,
@@ -666,10 +668,10 @@ export default function ProfileScreen() {
                             <Ionicons name="log-out-outline" size={14} color={theme.btnDangerText} />
                         </View>
                         <View style={{ flex: 1 }}>
-                            <Text style={{ color: theme.btnDangerText, fontSize: 13, fontWeight: "700" }}>
+                            <Text style={{ color: theme.btnDangerText, fontSize: 13, fontWeight: "800", letterSpacing: 0.3 }}>
                                 Logout
                             </Text>
-                            <Text style={{ color: theme.red + "80", fontSize: 10, marginTop: 1 }}>
+                            <Text style={{ color: theme.red + "80", fontSize: 10, marginTop: 1, letterSpacing: 0.3 }}>
                                 Sign out of your account
                             </Text>
                         </View>

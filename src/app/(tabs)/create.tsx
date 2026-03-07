@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
+    Image,
     KeyboardAvoidingView,
     Platform,
     Pressable,
@@ -13,6 +14,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
+import { Card } from "../../components/ui/Card";
 import { useToast } from "../../contexts/ToastContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { useWallet } from "../../components/WalletProvider";
@@ -20,6 +22,7 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { duelsAPI, gameProfileAPI } from "../../services/api";
 import { COMMON_TOKENS, EXPIRATION_PRESETS, SUPPORTED_GAMES } from "../../constants";
 import type { GameProfile } from "../../types";
+import { GAME_ICONS } from "../../assets/games";
 import { transact, Web3MobileWallet } from "@solana-mobile/mobile-wallet-adapter-protocol-web3js";
 import { Connection, PublicKey, Transaction, clusterApiUrl } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
@@ -33,7 +36,6 @@ function getTokenDecimals(symbol: string): number {
     return 1_000_000;
 }
 
-// Step definitions — Game is step 0
 const STEPS = [
     { key: "game", label: "Game", icon: "game-controller-outline" as keyof typeof Ionicons.glyphMap },
     { key: "stake", label: "Stake", icon: "cash-outline" as keyof typeof Ionicons.glyphMap },
@@ -61,7 +63,6 @@ export default function CreateDuelScreen() {
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
-    // Fetch user's linked game profiles on mount
     const fetchLinkedProfiles = useCallback(async () => {
         try {
             const res = await gameProfileAPI.getAll();
@@ -75,11 +76,9 @@ export default function CreateDuelScreen() {
 
     useEffect(() => { fetchLinkedProfiles(); }, [fetchLinkedProfiles]);
 
-    /** Get the linked profile for a given game name, if any */
     const getLinkedProfile = (gameName: string): GameProfile | undefined =>
         linkedProfiles.find((p) => p.gameName === gameName);
 
-    /** Get the selected game's info */
     const selectedGame = selectedGameIdx !== null ? SUPPORTED_GAMES[selectedGameIdx] : null;
     const selectedGameProfile = selectedGame ? getLinkedProfile(selectedGame.name) : undefined;
 
@@ -194,7 +193,7 @@ export default function CreateDuelScreen() {
     const potentialWin = stakeAmount ? (parseFloat(stakeAmount) * 2).toFixed(2) : "0";
 
     const canAdvance = () => {
-        if (step === 0) return true; // Game step is optional — user can skip or select
+        if (step === 0) return true;
         if (step === 1) {
             const amount = parseFloat(stakeAmount);
             return stakeAmount && !isNaN(amount) && amount > 0;
@@ -215,58 +214,68 @@ export default function CreateDuelScreen() {
             <StatusBar style="dark" />
             <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
                 {/* ═══ HEADER ═══ */}
-                <View style={{ paddingHorizontal: 20, paddingTop: 56, paddingBottom: 8 }}>
-                    <Text style={{
-                        color: theme.textPrimary,
-                        fontSize: 26,
-                        fontWeight: "900",
-                        letterSpacing: 1,
-                    }}>
-                        Create Duel
-                    </Text>
-                    <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 3, letterSpacing: 0.2 }}>
-                        Stake crypto, challenge anyone on the arena
-                    </Text>
+                <View style={{ paddingHorizontal: 20, paddingTop: 58, paddingBottom: 8 }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                        <View style={{
+                            width: 4,
+                            height: 24,
+                            backgroundColor: theme.accent,
+                            borderRadius: 2,
+                        }} />
+                        <View>
+                            <Text style={{
+                                color: theme.textPrimary,
+                                fontSize: 24,
+                                fontWeight: "900",
+                                letterSpacing: 2,
+                            }}>
+                                CREATE DUEL
+                            </Text>
+                            <Text style={{ color: theme.textMuted, fontSize: 10, marginTop: 2, letterSpacing: 1.5, fontWeight: "600" }}>
+                                STAKE CRYPTO, CHALLENGE ANYONE
+                            </Text>
+                        </View>
+                    </View>
                 </View>
 
                 {/* ═══ STEP PROGRESS BAR ═══ */}
                 <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 0 }}>
                         {STEPS.map((s, i) => (
                             <React.Fragment key={s.key}>
-                                {/* Step circle */}
+                                {/* Step node */}
                                 <Pressable
                                     onPress={() => { if (i <= step) setStep(i); }}
                                     style={{
-                                        width: 32,
-                                        height: 32,
-                                        borderRadius: 16,
+                                        width: 30,
+                                        height: 30,
+                                        borderRadius: 8,
                                         alignItems: "center",
                                         justifyContent: "center",
                                         backgroundColor: i <= step ? theme.accent : theme.bgCard,
                                         borderWidth: 1.5,
-                                        borderColor: i <= step ? theme.borderStrong : theme.border,
+                                        borderColor: i <= step ? theme.accentNeon : theme.border,
                                     }}
                                 >
                                     {i < step ? (
-                                        <Ionicons name="checkmark" size={14} color={theme.textInverse} />
+                                        <Ionicons name="checkmark" size={13} color={theme.textInverse} />
                                     ) : (
-                                        <Ionicons name={s.icon} size={13} color={i === step ? theme.textInverse : theme.textMuted} />
+                                        <Ionicons name={s.icon} size={12} color={i === step ? theme.textInverse : theme.textMuted} />
                                     )}
                                 </Pressable>
-                                {/* Connector line */}
+                                {/* Connector */}
                                 {i < STEPS.length - 1 && (
                                     <View style={{
                                         flex: 1,
                                         height: 2,
-                                        borderRadius: 1,
                                         backgroundColor: i < step ? theme.accent : theme.border,
+                                        marginHorizontal: 2,
                                     }} />
                                 )}
                             </React.Fragment>
                         ))}
                     </View>
-                    {/* Step labels below */}
+                    {/* Step labels */}
                     <View style={{ flexDirection: "row", marginTop: 6 }}>
                         {STEPS.map((s, i) => (
                             <Text
@@ -274,10 +283,11 @@ export default function CreateDuelScreen() {
                                 style={{
                                     flex: 1,
                                     textAlign: i === 0 ? "left" : i === STEPS.length - 1 ? "right" : "center",
-                                    fontSize: 9,
-                                    fontWeight: i === step ? "800" : "600",
-                                    color: i <= step ? theme.accentLight : theme.textMuted,
-                                    letterSpacing: 0.5,
+                                    fontSize: 8,
+                                    fontWeight: i === step ? "900" : "600",
+                                    color: i <= step ? theme.accent : theme.textMuted,
+                                    letterSpacing: 1,
+                                    textTransform: "uppercase",
                                 }}
                             >
                                 {s.label}
@@ -293,30 +303,28 @@ export default function CreateDuelScreen() {
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                 >
-                    {/* Glass card container for each step */}
-                    <View style={{
-                        backgroundColor: theme.bgGlass,
-                        borderWidth: 1,
-                        borderColor: theme.borderStrong,
-                        borderRadius: 20,
-                        overflow: "hidden",
-                    }}>
-                        {/* Accent bar */}
-                        <View style={{ height: 2, backgroundColor: theme.accent }} />
-
-                        <View style={{ padding: 20 }}>
+                    {/* Panel container */}
+                    <Card
+                        noPadding
+                        style={{
+                            backgroundColor: theme.bgGlass,
+                            borderColor: theme.borderStrong,
+                        }}
+                    >
+                        <View style={{ padding: 18 }}>
                             {/* ── Step 0: Game Selection ── */}
                             {step === 0 && (
                                 <View>
                                     <Text style={{
                                         color: theme.textPrimary,
-                                        fontSize: 16,
-                                        fontWeight: "800",
-                                        marginBottom: 4,
+                                        fontSize: 15,
+                                        fontWeight: "900",
+                                        letterSpacing: 0.5,
+                                        marginBottom: 3,
                                     }}>
                                         Choose a game
                                     </Text>
-                                    <Text style={{ color: theme.textMuted, fontSize: 12, marginBottom: 20 }}>
+                                    <Text style={{ color: theme.textMuted, fontSize: 11, marginBottom: 18, letterSpacing: 0.3 }}>
                                         Select a game for auto-verification, or skip for a custom duel
                                     </Text>
 
@@ -325,44 +333,44 @@ export default function CreateDuelScreen() {
                                             <ActivityIndicator size="small" color={theme.accent} />
                                         </View>
                                     ) : (
-                                        <View style={{ gap: 10 }}>
+                                        <View style={{ gap: 8 }}>
                                             {/* "No game" option */}
                                             <Pressable
                                                 onPress={() => setSelectedGameIdx(null)}
                                                 style={{
                                                     flexDirection: "row",
                                                     alignItems: "center",
-                                                    padding: 14,
-                                                    borderRadius: 14,
+                                                    padding: 12,
+                                                    borderRadius: 10,
                                                     borderWidth: 1.5,
-                                                    borderColor: selectedGameIdx === null ? theme.borderStrong : theme.border,
+                                                    borderColor: selectedGameIdx === null ? theme.borderNeon : theme.border,
                                                     backgroundColor: selectedGameIdx === null ? theme.accentBg : theme.bgCard,
                                                 }}
                                             >
                                                 <View style={{
-                                                    width: 38, height: 38, borderRadius: 19,
-                                                    backgroundColor: selectedGameIdx === null ? theme.accent + "30" : theme.bgMuted,
-                                                    alignItems: "center", justifyContent: "center", marginRight: 12,
+                                                    width: 36, height: 36, borderRadius: 10,
+                                                    backgroundColor: selectedGameIdx === null ? theme.accent + "20" : theme.bgMuted,
+                                                    alignItems: "center", justifyContent: "center", marginRight: 10,
                                                 }}>
                                                     <Ionicons
                                                         name="flash-outline"
-                                                        size={16}
-                                                        color={selectedGameIdx === null ? theme.accentLight : theme.textSecondary}
+                                                        size={15}
+                                                        color={selectedGameIdx === null ? theme.accent : theme.textSecondary}
                                                     />
                                                 </View>
                                                 <View style={{ flex: 1 }}>
                                                     <Text style={{
-                                                        fontWeight: "800", fontSize: 14,
-                                                        color: selectedGameIdx === null ? theme.accentLight : theme.textPrimary,
+                                                        fontWeight: "800", fontSize: 13, letterSpacing: 0.3,
+                                                        color: selectedGameIdx === null ? theme.accent : theme.textPrimary,
                                                     }}>
                                                         Custom Duel
                                                     </Text>
-                                                    <Text style={{ color: theme.textMuted, fontSize: 11, marginTop: 2 }}>
+                                                    <Text style={{ color: theme.textMuted, fontSize: 10, marginTop: 2 }}>
                                                         No game — manual result submission
                                                     </Text>
                                                 </View>
                                                 {selectedGameIdx === null && (
-                                                    <Ionicons name="checkmark-circle" size={20} color={theme.accentLight} />
+                                                    <Ionicons name="checkmark-circle" size={18} color={theme.accent} />
                                                 )}
                                             </Pressable>
 
@@ -380,49 +388,58 @@ export default function CreateDuelScreen() {
                                                         style={{
                                                             flexDirection: "row",
                                                             alignItems: "center",
-                                                            padding: 14,
-                                                            borderRadius: 14,
+                                                            padding: 12,
+                                                            borderRadius: 10,
                                                             borderWidth: 1.5,
-                                                            borderColor: isSelected ? theme.borderStrong : theme.border,
+                                                            borderColor: isSelected ? theme.borderNeon : theme.border,
                                                             backgroundColor: isSelected ? theme.accentBg : theme.bgCard,
-                                                            opacity: isDisabled ? 0.45 : 1,
+                                                            opacity: isDisabled ? 0.4 : 1,
                                                         }}
                                                     >
                                                         <View style={{
-                                                            width: 38, height: 38, borderRadius: 19,
-                                                            backgroundColor: isSelected ? theme.accent + "30" : theme.bgMuted,
-                                                            alignItems: "center", justifyContent: "center", marginRight: 12,
+                                                            width: 36, height: 36, borderRadius: 10,
+                                                            backgroundColor: isSelected ? theme.accent + "20" : theme.bgMuted,
+                                                            alignItems: "center", justifyContent: "center", marginRight: 10,
+                                                            overflow: "hidden",
                                                         }}>
-                                                            <Ionicons
-                                                                name={game.ionicon as keyof typeof Ionicons.glyphMap}
-                                                                size={16}
-                                                                color={isSelected ? theme.accentLight : theme.textSecondary}
-                                                            />
+                                                            {GAME_ICONS[game.name] ? (
+                                                                <Image
+                                                                    source={GAME_ICONS[game.name]}
+                                                                    style={{ width: 28, height: 28, borderRadius: 4 }}
+                                                                    resizeMode="contain"
+                                                                />
+                                                            ) : (
+                                                                <Ionicons
+                                                                    name={game.ionicon as keyof typeof Ionicons.glyphMap}
+                                                                    size={15}
+                                                                    color={isSelected ? theme.accent : theme.textSecondary}
+                                                                />
+                                                            )}
                                                         </View>
                                                         <View style={{ flex: 1 }}>
                                                             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                                                                 <Text style={{
-                                                                    fontWeight: "800", fontSize: 14,
-                                                                    color: isSelected ? theme.accentLight : theme.textPrimary,
+                                                                    fontWeight: "800", fontSize: 13, letterSpacing: 0.3,
+                                                                    color: isSelected ? theme.accent : theme.textPrimary,
                                                                 }}>
                                                                     {game.name}
                                                                 </Text>
                                                                 {!isLive && (
                                                                     <View style={{
-                                                                        backgroundColor: theme.amber + "20",
-                                                                        borderRadius: 6,
-                                                                        paddingHorizontal: 6,
-                                                                        paddingVertical: 2,
+                                                                        backgroundColor: theme.amber + "15",
+                                                                        borderRadius: 4,
+                                                                        paddingHorizontal: 5,
+                                                                        paddingVertical: 1,
                                                                         borderWidth: 1,
-                                                                        borderColor: theme.amber + "40",
+                                                                        borderColor: theme.amber + "30",
                                                                     }}>
-                                                                        <Text style={{ color: theme.amber, fontSize: 8, fontWeight: "800", letterSpacing: 0.5 }}>
+                                                                        <Text style={{ color: theme.amber, fontSize: 7, fontWeight: "900", letterSpacing: 1 }}>
                                                                             SOON
                                                                         </Text>
                                                                     </View>
                                                                 )}
                                                             </View>
-                                                            <Text style={{ color: theme.textMuted, fontSize: 11, marginTop: 2 }}>
+                                                            <Text style={{ color: theme.textMuted, fontSize: 10, marginTop: 2 }}>
                                                                 {linked
                                                                     ? `Linked: ${linked.playerId ?? "—"}`
                                                                     : isLive
@@ -432,7 +449,7 @@ export default function CreateDuelScreen() {
                                                             </Text>
                                                         </View>
                                                         {isSelected && (
-                                                            <Ionicons name="checkmark-circle" size={20} color={theme.accentLight} />
+                                                            <Ionicons name="checkmark-circle" size={18} color={theme.accent} />
                                                         )}
                                                     </Pressable>
                                                 );
@@ -447,15 +464,15 @@ export default function CreateDuelScreen() {
                                             flexDirection: "row",
                                             alignItems: "center",
                                             gap: 8,
-                                            backgroundColor: theme.amber + "12",
-                                            borderRadius: 10,
+                                            backgroundColor: theme.amber + "08",
+                                            borderRadius: 8,
                                             padding: 12,
                                             borderWidth: 1,
-                                            borderColor: theme.amber + "25",
+                                            borderColor: theme.amber + "20",
                                         }}>
-                                            <Ionicons name="warning-outline" size={16} color={theme.amber} />
-                                            <Text style={{ color: theme.amber, fontSize: 11, flex: 1, lineHeight: 16 }}>
-                                                Link your {selectedGame.name} account in Profile for auto-verification. You can still create the duel without it.
+                                            <Ionicons name="warning-outline" size={14} color={theme.amber} />
+                                            <Text style={{ color: theme.amber, fontSize: 10, flex: 1, lineHeight: 15 }}>
+                                                Link your {selectedGame.name} account in Profile for auto-verification.
                                             </Text>
                                         </View>
                                     )}
@@ -467,13 +484,14 @@ export default function CreateDuelScreen() {
                                 <View>
                                     <Text style={{
                                         color: theme.textPrimary,
-                                        fontSize: 16,
-                                        fontWeight: "800",
-                                        marginBottom: 4,
+                                        fontSize: 15,
+                                        fontWeight: "900",
+                                        letterSpacing: 0.5,
+                                        marginBottom: 3,
                                     }}>
-                                        How much do you want to stake?
+                                        How much to stake?
                                     </Text>
-                                    <Text style={{ color: theme.textMuted, fontSize: 12, marginBottom: 20 }}>
+                                    <Text style={{ color: theme.textMuted, fontSize: 11, marginBottom: 18 }}>
                                         Both players put up equal amounts
                                     </Text>
 
@@ -487,7 +505,7 @@ export default function CreateDuelScreen() {
                                     />
 
                                     {/* Quick-pick amounts */}
-                                    <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
+                                    <View style={{ flexDirection: "row", gap: 6, marginTop: 8 }}>
                                         {["0.1", "0.5", "1", "5"].map((amt) => (
                                             <Pressable
                                                 key={amt}
@@ -495,17 +513,17 @@ export default function CreateDuelScreen() {
                                                 style={{
                                                     flex: 1,
                                                     paddingVertical: 10,
-                                                    borderRadius: 10,
+                                                    borderRadius: 8,
                                                     alignItems: "center",
                                                     backgroundColor: stakeAmount === amt ? theme.accentBg : theme.bgCard,
                                                     borderWidth: 1,
-                                                    borderColor: stakeAmount === amt ? theme.borderGlow : theme.border,
+                                                    borderColor: stakeAmount === amt ? theme.borderNeon : theme.border,
                                                 }}
                                             >
                                                 <Text style={{
-                                                    color: stakeAmount === amt ? theme.accentLight : theme.textSecondary,
+                                                    color: stakeAmount === amt ? theme.accent : theme.textSecondary,
                                                     fontSize: 13,
-                                                    fontWeight: "700",
+                                                    fontWeight: "800",
                                                 }}>
                                                     {amt}
                                                 </Text>
@@ -521,14 +539,14 @@ export default function CreateDuelScreen() {
                                             alignItems: "center",
                                             justifyContent: "center",
                                             gap: 6,
-                                            backgroundColor: theme.badgeActiveBg,
-                                            borderRadius: 10,
+                                            backgroundColor: theme.green + "08",
+                                            borderRadius: 8,
                                             paddingVertical: 10,
                                             borderWidth: 1,
-                                            borderColor: theme.green + "25",
+                                            borderColor: theme.green + "20",
                                         }}>
-                                            <Ionicons name="trophy" size={14} color={theme.green} />
-                                            <Text style={{ color: theme.green, fontSize: 13, fontWeight: "800" }}>
+                                            <Ionicons name="trophy" size={13} color={theme.green} />
+                                            <Text style={{ color: theme.green, fontSize: 12, fontWeight: "900", letterSpacing: 0.3 }}>
                                                 Win {potentialWin} {tokenSymbolDisplay}
                                             </Text>
                                         </View>
@@ -541,18 +559,18 @@ export default function CreateDuelScreen() {
                                 <View>
                                     <Text style={{
                                         color: theme.textPrimary,
-                                        fontSize: 16,
-                                        fontWeight: "800",
-                                        marginBottom: 4,
+                                        fontSize: 15,
+                                        fontWeight: "900",
+                                        letterSpacing: 0.5,
+                                        marginBottom: 3,
                                     }}>
                                         Choose your token
                                     </Text>
-                                    <Text style={{ color: theme.textMuted, fontSize: 12, marginBottom: 20 }}>
+                                    <Text style={{ color: theme.textMuted, fontSize: 11, marginBottom: 18 }}>
                                         Select the token you want to stake
                                     </Text>
 
-                                    {/* Token selection cards — vertical, larger */}
-                                    <View style={{ gap: 10 }}>
+                                    <View style={{ gap: 8 }}>
                                         {COMMON_TOKENS.map((token, i) => {
                                             const isSelected = !useCustomMint && selectedToken === i;
                                             return (
@@ -562,27 +580,27 @@ export default function CreateDuelScreen() {
                                                     style={{
                                                         flexDirection: "row",
                                                         alignItems: "center",
-                                                        padding: 14,
-                                                        borderRadius: 14,
+                                                        padding: 12,
+                                                        borderRadius: 10,
                                                         borderWidth: 1.5,
-                                                         borderColor: isSelected ? theme.borderStrong : theme.border,
+                                                        borderColor: isSelected ? theme.borderNeon : theme.border,
                                                         backgroundColor: isSelected ? theme.accentBg : theme.bgCard,
                                                     }}
                                                 >
-                                                    {/* Token icon circle */}
                                                     <View style={{
-                                                        width: 38,
-                                                        height: 38,
-                                                        borderRadius: 19,
-                                                        backgroundColor: isSelected ? theme.accent + "30" : theme.bgMuted,
+                                                        width: 36,
+                                                        height: 36,
+                                                        borderRadius: 10,
+                                                        backgroundColor: isSelected ? theme.accent + "20" : theme.bgMuted,
                                                         alignItems: "center",
                                                         justifyContent: "center",
-                                                        marginRight: 12,
+                                                        marginRight: 10,
                                                     }}>
                                                         <Text style={{
-                                                            fontSize: 14,
+                                                            fontSize: 13,
                                                             fontWeight: "900",
-                                                            color: isSelected ? theme.accentLight : theme.textSecondary,
+                                                            color: isSelected ? theme.accent : theme.textSecondary,
+                                                            letterSpacing: 1,
                                                         }}>
                                                             {token.symbol.charAt(0)}
                                                         </Text>
@@ -590,17 +608,18 @@ export default function CreateDuelScreen() {
                                                     <View style={{ flex: 1 }}>
                                                         <Text style={{
                                                             fontWeight: "800",
-                                                            fontSize: 14,
-                                                            color: isSelected ? theme.accentLight : theme.textPrimary,
+                                                            fontSize: 13,
+                                                            letterSpacing: 0.3,
+                                                            color: isSelected ? theme.accent : theme.textPrimary,
                                                         }}>
                                                             {token.symbol}
                                                         </Text>
-                                                        <Text style={{ color: theme.textMuted, fontSize: 11, marginTop: 2 }}>
+                                                        <Text style={{ color: theme.textMuted, fontSize: 10, marginTop: 2 }}>
                                                             {token.name}
                                                         </Text>
                                                     </View>
                                                     {isSelected && (
-                                                        <Ionicons name="checkmark-circle" size={20} color={theme.accentLight} />
+                                                        <Ionicons name="checkmark-circle" size={18} color={theme.accent} />
                                                     )}
                                                 </Pressable>
                                             );
@@ -613,17 +632,17 @@ export default function CreateDuelScreen() {
                                         style={{
                                             flexDirection: "row",
                                             alignItems: "center",
-                                            gap: 8,
+                                            gap: 7,
                                             marginTop: 14,
                                             paddingVertical: 6,
                                         }}
                                     >
                                         <Ionicons
                                             name={useCustomMint ? "checkbox" : "square-outline"}
-                                            size={18}
+                                            size={16}
                                             color={useCustomMint ? theme.accent : theme.textMuted}
                                         />
-                                        <Text style={{ color: theme.textSecondary, fontSize: 12 }}>
+                                        <Text style={{ color: theme.textSecondary, fontSize: 11, letterSpacing: 0.2 }}>
                                             Use custom token mint
                                         </Text>
                                     </Pressable>
@@ -648,17 +667,18 @@ export default function CreateDuelScreen() {
                                 <View>
                                     <Text style={{
                                         color: theme.textPrimary,
-                                        fontSize: 16,
-                                        fontWeight: "800",
-                                        marginBottom: 4,
+                                        fontSize: 15,
+                                        fontWeight: "900",
+                                        letterSpacing: 0.5,
+                                        marginBottom: 3,
                                     }}>
                                         Set duel duration
                                     </Text>
-                                    <Text style={{ color: theme.textMuted, fontSize: 12, marginBottom: 20 }}>
+                                    <Text style={{ color: theme.textMuted, fontSize: 11, marginBottom: 18 }}>
                                         How long should the duel stay open?
                                     </Text>
 
-                                    <View style={{ gap: 8 }}>
+                                    <View style={{ gap: 6 }}>
                                         {EXPIRATION_PRESETS.map((preset, i) => {
                                             const isSelected = selectedExpiry === i;
                                             return (
@@ -669,36 +689,38 @@ export default function CreateDuelScreen() {
                                                         flexDirection: "row",
                                                         alignItems: "center",
                                                         justifyContent: "space-between",
-                                                        paddingHorizontal: 16,
-                                                        paddingVertical: 13,
-                                                        borderRadius: 12,
+                                                        paddingHorizontal: 14,
+                                                        paddingVertical: 12,
+                                                        borderRadius: 10,
                                                         borderWidth: 1.5,
-                                                         borderColor: isSelected ? theme.borderStrong : theme.border,
+                                                        borderColor: isSelected ? theme.borderNeon : theme.border,
                                                         backgroundColor: isSelected ? theme.accentBg : theme.bgCard,
                                                     }}
                                                 >
-                                                    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                                                        <Ionicons
-                                                            name="time-outline"
-                                                            size={16}
-                                                            color={isSelected ? theme.accentLight : theme.textMuted}
-                                                        />
+                                                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                                                        <View style={{
+                                                            width: 4,
+                                                            height: 14,
+                                                            borderRadius: 2,
+                                                            backgroundColor: isSelected ? theme.accent : theme.border,
+                                                        }} />
                                                         <Text style={{
-                                                            fontSize: 14,
+                                                            fontSize: 13,
                                                             fontWeight: "700",
-                                                            color: isSelected ? theme.accentLight : theme.textPrimary,
+                                                            letterSpacing: 0.3,
+                                                            color: isSelected ? theme.accent : theme.textPrimary,
                                                         }}>
                                                             {preset.label}
                                                         </Text>
                                                     </View>
                                                     {isSelected && (
-                                                        <Ionicons name="checkmark-circle" size={18} color={theme.accentLight} />
+                                                        <Ionicons name="checkmark-circle" size={16} color={theme.accent} />
                                                     )}
                                                 </Pressable>
                                             );
                                         })}
-                                    </View>
-                                </View>
+                        </View>
+                    </View>
                             )}
 
                             {/* ── Step 4: Confirm ── */}
@@ -706,33 +728,41 @@ export default function CreateDuelScreen() {
                                 <View>
                                     <Text style={{
                                         color: theme.textPrimary,
-                                        fontSize: 16,
-                                        fontWeight: "800",
+                                        fontSize: 15,
+                                        fontWeight: "900",
+                                        letterSpacing: 0.5,
                                         marginBottom: 16,
                                     }}>
                                         Review your duel
                                     </Text>
 
-                                    {/* Summary rows */}
                                     {[
-                                        { label: "Game", value: selectedGame?.name ?? "Custom Duel", color: theme.accentLight },
+                                        { label: "Game", value: selectedGame?.name ?? "Custom Duel", color: theme.accent },
                                         { label: "Your Stake", value: `${stakeAmount || "0"} ${tokenSymbolDisplay}`, color: theme.textPrimary },
                                         { label: "Total Pot", value: `${potentialWin} ${tokenSymbolDisplay}`, color: theme.green },
-                                        { label: "Token", value: tokenSymbolDisplay, color: theme.accentLight },
+                                        { label: "Token", value: tokenSymbolDisplay, color: theme.accent },
                                         { label: "Duration", value: EXPIRATION_PRESETS[selectedExpiry].label, color: theme.textPrimary },
                                     ].map((row, i) => (
                                         <View key={i} style={{
                                             flexDirection: "row",
                                             justifyContent: "space-between",
                                             alignItems: "center",
-                                            paddingVertical: 12,
+                                            paddingVertical: 11,
                                             borderBottomWidth: i < 4 ? 1 : 0,
-                                            borderBottomColor: theme.border,
+                                            borderBottomColor: theme.divider,
                                         }}>
-                                            <Text style={{ color: theme.textSecondary, fontSize: 13 }}>
-                                                {row.label}
-                                            </Text>
-                                            <Text style={{ color: row.color, fontSize: 14, fontWeight: "800" }}>
+                                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                                                <View style={{
+                                                    width: 3,
+                                                    height: 12,
+                                                    borderRadius: 1,
+                                                    backgroundColor: row.color,
+                                                }} />
+                                                <Text style={{ color: theme.textSecondary, fontSize: 12, letterSpacing: 0.3 }}>
+                                                    {row.label}
+                                                </Text>
+                                            </View>
+                                            <Text style={{ color: row.color, fontSize: 13, fontWeight: "900", letterSpacing: 0.3 }}>
                                                 {row.value}
                                             </Text>
                                         </View>
@@ -740,17 +770,17 @@ export default function CreateDuelScreen() {
                                 </View>
                             )}
                         </View>
-                    </View>
+                    </Card>
 
                     {/* ═══ NAVIGATION BUTTONS ═══ */}
-                    <View style={{ flexDirection: "row", gap: 10, marginTop: 20 }}>
+                    <View style={{ flexDirection: "row", gap: 10, marginTop: 18 }}>
                         {step > 0 && (
                             <View style={{ flex: 1 }}>
                                 <Button
                                     title="Back"
                                     onPress={goBack}
                                     variant="secondary"
-                                    icon={<Ionicons name="arrow-back" size={15} color={theme.accentLight} />}
+                                    icon={<Ionicons name="arrow-back" size={14} color={theme.accentLight} />}
                                 />
                             </View>
                         )}

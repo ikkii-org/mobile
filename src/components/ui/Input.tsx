@@ -12,37 +12,48 @@ export function Input({ label, error, containerClassName = "", ...props }: Input
     const theme = useTheme();
     const [focused, setFocused] = useState(false);
 
-    const borderColor = error ? theme.red : focused ? theme.accent : theme.border;
+    const borderColor = error
+        ? theme.red
+        : focused
+            ? theme.borderNeon
+            : theme.border;
 
     return (
         <View style={{ marginBottom: 16 }}>
-            <Text
-                style={{
-                    color: theme.textMuted,
-                    fontSize: 10,
-                    fontWeight: "700",
-                    letterSpacing: 1.4,
-                    textTransform: "uppercase",
-                    marginBottom: 8,
-                    marginLeft: 2,
-                }}
-            >
-                {label}
-            </Text>
+            {/* Label with decorative left bar */}
+            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8, marginLeft: 2 }}>
+                <View
+                    style={{
+                        width: 2,
+                        height: 10,
+                        backgroundColor: focused ? theme.accent : theme.textMuted,
+                        borderRadius: 1,
+                        marginRight: 6,
+                    }}
+                />
+                <Text
+                    style={{
+                        color: focused ? theme.accent : theme.textMuted,
+                        fontSize: 9,
+                        fontWeight: "800",
+                        letterSpacing: 2,
+                        textTransform: "uppercase",
+                    }}
+                >
+                    {label}
+                </Text>
+            </View>
             <TextInput
                 style={{
                     backgroundColor: theme.bgInput,
-                    borderRadius: 14,
-                    paddingHorizontal: 16,
-                    paddingVertical: 14,
+                    borderRadius: 10,
+                    paddingHorizontal: 14,
+                    paddingVertical: 13,
                     color: theme.textPrimary,
                     fontSize: 15,
+                    fontWeight: "500",
                     borderWidth: 1.5,
                     borderColor,
-                    shadowColor: focused && !error ? theme.accent : "transparent",
-                    shadowOpacity: 0.3,
-                    shadowRadius: 8,
-                    shadowOffset: { width: 0, height: 0 },
                 }}
                 placeholderTextColor={theme.textMuted}
                 onFocus={() => setFocused(true)}
@@ -53,10 +64,11 @@ export function Input({ label, error, containerClassName = "", ...props }: Input
                 <Text
                     style={{
                         color: theme.red,
-                        fontSize: 11,
+                        fontSize: 10,
                         marginTop: 6,
                         marginLeft: 2,
-                        fontWeight: "600",
+                        fontWeight: "700",
+                        letterSpacing: 0.3,
                     }}
                 >
                     {error}

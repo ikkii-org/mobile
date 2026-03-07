@@ -20,14 +20,10 @@ function StatBox({
 }) {
     const theme = useTheme();
     return (
-        <View style={{
+        <Card noFill style={{
             flex: 1,
-            backgroundColor: theme.bgCardAlt,
-            borderRadius: 12,
-            padding: 12,
-            borderWidth: 1,
-            borderColor: theme.border,
             alignItems: "center",
+            padding: 12,
         }}>
             <Text style={{ fontSize: 18, fontWeight: "700", color }}>
                 {value}
@@ -42,7 +38,7 @@ function StatBox({
             }}>
                 {label}
             </Text>
-        </View>
+        </Card>
     );
 }
 

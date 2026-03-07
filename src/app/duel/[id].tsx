@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Badge } from "../../components/ui/Badge";
 import { Avatar } from "../../components/ui/Avatar";
 import { Button } from "../../components/ui/Button";
+import { Card } from "../../components/ui/Card";
 import { Modal } from "../../components/ui/Modal";
 import { useToast } from "../../contexts/ToastContext";
 import { useAuth } from "../../contexts/AuthContext";
@@ -420,15 +421,12 @@ export default function DuelDetailScreen() {
                 </View>
 
                 {/* Players VS Card */}
-                <View style={{
+                <Card noPadding accent={statusColor} style={{
                     backgroundColor: theme.bgGlass,
                     borderRadius: 16,
-                    borderWidth: 1,
                     borderColor: theme.borderStrong,
                     marginBottom: 12,
-                    overflow: "hidden",
                 }}>
-                    <View style={{ height: 3, backgroundColor: statusColor }} />
                     <View style={{ padding: 20 }}>
                         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                             {/* Player 1 */}
@@ -536,18 +534,12 @@ export default function DuelDetailScreen() {
                             </View>
                         </View>
                     </View>
-                </View>
-
+                </Card>
                 {/* Stake Info Card */}
-                <View style={{
-                    backgroundColor: theme.bgCard,
+                <Card noPadding style={{
                     borderRadius: 16,
-                    borderWidth: 1,
-                    borderColor: theme.border,
                     marginBottom: 12,
-                    overflow: "hidden",
                 }}>
-                    <View style={{ height: 2, backgroundColor: theme.accent }} />
                     <View style={{ padding: 16 }}>
                         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                             <Text style={{ color: theme.textMuted, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", fontWeight: "700" }}>
@@ -586,14 +578,11 @@ export default function DuelDetailScreen() {
                             </View>
                         )}
                     </View>
-                </View>
+                </Card>
 
                 {/* Meta Card */}
-                <View style={{
-                    backgroundColor: theme.bgCard,
+                <Card noFill style={{
                     borderRadius: 16,
-                    borderWidth: 1,
-                    borderColor: theme.border,
                     marginBottom: 24,
                     padding: 14,
                 }}>
@@ -640,7 +629,7 @@ export default function DuelDetailScreen() {
                             </Text>
                         </View>
                     )}
-                </View>
+                </Card>
 
                 {/* Contextual Actions */}
                 {duel.status === "OPEN" && !isParticipant && (
@@ -681,14 +670,11 @@ export default function DuelDetailScreen() {
                 )}
 
                 {duel.status === "SETTLED" && (
-                    <View style={{
+                    <Card noPadding accent={theme.amber} style={{
                         backgroundColor: theme.bgGlass,
                         borderRadius: 16,
-                        borderWidth: 1,
                         borderColor: theme.amber + "40",
-                        overflow: "hidden",
                     }}>
-                        <View style={{ height: 3, backgroundColor: theme.amber }} />
                         <View style={{ padding: 20, alignItems: "center" }}>
                             <View style={{
                                 width: 56,
@@ -725,25 +711,20 @@ export default function DuelDetailScreen() {
                                 </View>
                             )}
                         </View>
-                    </View>
+                    </Card>
                 )}
 
                 {duel.status === "CANCELLED" && (
-                    <View style={{
-                        backgroundColor: theme.bgCard,
+                    <Card noPadding accent={theme.grey} style={{
                         borderRadius: 16,
-                        borderWidth: 1,
-                        borderColor: theme.border,
-                        overflow: "hidden",
                     }}>
-                        <View style={{ height: 3, backgroundColor: theme.grey }} />
                         <View style={{ padding: 20, alignItems: "center" }}>
                             <Ionicons name="close-circle" size={36} color={theme.grey} />
                             <Text style={{ color: theme.textMuted, fontSize: 14, fontWeight: "700", marginTop: 8, letterSpacing: 1, textTransform: "uppercase" }}>
                                 Duel Cancelled
                             </Text>
                         </View>
-                    </View>
+                    </Card>
                 )}
             </ScrollView>
 

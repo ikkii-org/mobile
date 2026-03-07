@@ -6,11 +6,60 @@ import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useWallet } from "../../components/WalletProvider";
 import { DuelCard } from "../../components/DuelCard";
+import { Card } from "../../components/ui/Card";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { duelsAPI } from "../../services/api";
 import type { Duel } from "../../types";
+
+/** Reusable futuristic section header */
+function SectionHeader({ label, count, color, theme }: {
+    label: string; count: number; color: string; theme: ReturnType<typeof useTheme>;
+}) {
+    return (
+        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
+            {/* Decorative bar + dot */}
+            <View style={{ flexDirection: "row", alignItems: "center", marginRight: 8 }}>
+                <View style={{
+                    width: 12,
+                    height: 2,
+                    backgroundColor: color,
+                    borderRadius: 1,
+                }} />
+                <View style={{
+                    width: 4,
+                    height: 4,
+                    borderRadius: 1,
+                    backgroundColor: color,
+                    marginLeft: 2,
+                }} />
+            </View>
+            <Text style={{
+                color: theme.textPrimary,
+                fontSize: 11,
+                fontWeight: "900",
+                letterSpacing: 2,
+                textTransform: "uppercase",
+                flex: 1,
+            }}>
+                {label}
+            </Text>
+            <View style={{
+                backgroundColor: color + "12",
+                borderWidth: 1,
+                borderColor: color + "25",
+                borderRadius: 4,
+                paddingHorizontal: 7,
+                paddingVertical: 2,
+            }}>
+                <Text style={{ color, fontSize: 9, fontWeight: "900", letterSpacing: 0.5 }}>
+                    {count}
+                </Text>
+            </View>
+        </View>
+    );
+}
 
 export default function HomeScreen() {
     const router = useRouter();
@@ -56,7 +105,6 @@ export default function HomeScreen() {
 
     const onRefresh = () => { setRefreshing(true); fetchDuels(); };
 
-    // Carousel duels = active + disputed (the "live" ones)
     const liveDuels = [...activeDuels, ...disputedDuels];
 
     if (loading) {
@@ -86,27 +134,34 @@ export default function HomeScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 {/* ═══ HEADER ═══ */}
-                <View style={{ paddingHorizontal: 20, paddingTop: 56, paddingBottom: 6 }}>
+                <View style={{ paddingHorizontal: 20, paddingTop: 58, paddingBottom: 4 }}>
                     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                         <View>
-                            <Text style={{
-                                color: theme.textPrimary,
-                                fontSize: 28,
-                                fontWeight: "900",
-                                letterSpacing: 4,
-                                textShadowColor: theme.accentGlow,
-                                textShadowOffset: { width: 0, height: 0 },
-                                textShadowRadius: 14,
-                            }}>
-                                IKKII
-                            </Text>
+                            {/* Brand mark with geometric accent */}
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                                <View style={{
+                                    width: 4,
+                                    height: 28,
+                                    backgroundColor: theme.accent,
+                                    borderRadius: 2,
+                                }} />
+                                <Text style={{
+                                    color: theme.textPrimary,
+                                    fontSize: 28,
+                                    fontWeight: "900",
+                                    letterSpacing: 6,
+                                }}>
+                                    IKKII
+                                </Text>
+                            </View>
                             <Text style={{
                                 color: theme.textMuted,
                                 fontSize: 9,
-                                marginTop: 1,
-                                letterSpacing: 2,
-                                fontWeight: "700",
+                                marginTop: 3,
+                                letterSpacing: 3,
+                                fontWeight: "800",
                                 textTransform: "uppercase",
+                                marginLeft: 12,
                             }}>
                                 Crypto Dueling Arena
                             </Text>
@@ -121,99 +176,81 @@ export default function HomeScreen() {
                                 backgroundColor: theme.accentBg,
                                 borderWidth: 1,
                                 borderColor: theme.borderStrong,
-                                borderRadius: 100,
-                                paddingHorizontal: 12,
-                                paddingVertical: 7,
+                                borderRadius: 6,
+                                paddingHorizontal: 10,
+                                paddingVertical: 6,
                             }}>
-                                <Ionicons name="flash" size={11} color={theme.accentLight} />
-                                <Text style={{ color: theme.accentLight, fontSize: 11, fontWeight: "800" }}>
-                                    {balanceSol.toFixed(2)} SOL
+                                <Ionicons name="flash" size={10} color={theme.accent} />
+                                <Text style={{ color: theme.accent, fontSize: 11, fontWeight: "900", letterSpacing: 0.3 }}>
+                                    {balanceSol.toFixed(2)}
+                                </Text>
+                                <Text style={{ color: theme.textMuted, fontSize: 9, fontWeight: "700" }}>
+                                    SOL
                                 </Text>
                             </View>
                         )}
                     </View>
                 </View>
 
-                {/* ═══ DASHBOARD STATS ROW ═══ */}
-                <View style={{ flexDirection: "row", gap: 8, paddingHorizontal: 20, marginTop: 14, marginBottom: 6 }}>
+                {/* ═══ STATS ROW ═══ */}
+                <View style={{ flexDirection: "row", gap: 8, paddingHorizontal: 20, marginTop: 16, marginBottom: 6 }}>
                     {[
-                        { label: "Open", value: openDuels.length, icon: "radio-button-on" as keyof typeof Ionicons.glyphMap, color: theme.blue },
-                        { label: "Live", value: liveDuels.length, icon: "flash" as keyof typeof Ionicons.glyphMap, color: theme.green },
-                        { label: "Settled", value: settledDuels.length, icon: "checkmark-circle" as keyof typeof Ionicons.glyphMap, color: theme.amber },
+                        { label: "OPEN", value: openDuels.length, icon: "radio-button-on" as keyof typeof Ionicons.glyphMap, color: theme.blue },
+                        { label: "LIVE", value: liveDuels.length, icon: "flash" as keyof typeof Ionicons.glyphMap, color: theme.green },
+                        { label: "SETTLED", value: settledDuels.length, icon: "checkmark-circle" as keyof typeof Ionicons.glyphMap, color: theme.amber },
                     ].map((item) => (
-                        <View
+                        <Card
                             key={item.label}
+                            noFill
+                            noPadding
                             style={{
                                 flex: 1,
-                                backgroundColor: theme.bgCard,
-                                borderWidth: 1,
-                                borderColor: theme.border,
-                                borderRadius: 14,
+                                borderRadius: 10,
                                 paddingVertical: 12,
-                                paddingHorizontal: 10,
+                                paddingHorizontal: 8,
                                 alignItems: "center",
                             }}
                         >
-                            <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 4 }}>
-                                <Ionicons name={item.icon} size={12} color={item.color} />
-                                <Text style={{ color: item.color, fontSize: 20, fontWeight: "900" }}>
-                                    {item.value}
-                                </Text>
-                            </View>
+                            {/* Top neon line indicator */}
+                            <View style={{
+                                position: "absolute",
+                                top: 0,
+                                left: 12,
+                                right: 12,
+                                height: 2,
+                                backgroundColor: item.color,
+                                borderBottomLeftRadius: 2,
+                                borderBottomRightRadius: 2,
+                            }} />
+                            <Text style={{ color: item.color, fontSize: 22, fontWeight: "900", letterSpacing: -1 }}>
+                                {item.value}
+                            </Text>
                             <Text style={{
                                 color: theme.textMuted,
-                                fontSize: 9,
-                                fontWeight: "700",
-                                letterSpacing: 1,
+                                fontSize: 8,
+                                fontWeight: "800",
+                                letterSpacing: 2,
                                 textTransform: "uppercase",
+                                marginTop: 3,
                             }}>
                                 {item.label}
                             </Text>
-                        </View>
+                        </Card>
                     ))}
                 </View>
 
                 {/* ═══ LIVE DUELS CAROUSEL ═══ */}
                 {liveDuels.length > 0 && (
-                    <View style={{ marginTop: 18 }}>
-                        {/* Section header */}
-                        <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 20, marginBottom: 12 }}>
-                            <View style={{
-                                width: 6,
-                                height: 6,
-                                borderRadius: 3,
-                                backgroundColor: theme.green,
-                                shadowColor: theme.greenGlow,
-                                shadowOpacity: 0.9,
-                                shadowRadius: 6,
-                                shadowOffset: { width: 0, height: 0 },
-                                marginRight: 8,
-                            }} />
-                            <Text style={{
-                                color: theme.textPrimary,
-                                fontSize: 12,
-                                fontWeight: "800",
-                                letterSpacing: 1.2,
-                                textTransform: "uppercase",
-                                flex: 1,
-                            }}>
-                                Live Duels
-                            </Text>
-                            <View style={{
-                                backgroundColor: theme.green + "18",
-                                borderWidth: 1,
-                                borderColor: theme.green + "35",
-                                borderRadius: 100,
-                                paddingHorizontal: 8,
-                                paddingVertical: 2,
-                            }}>
-                                <Text style={{ color: theme.green, fontSize: 10, fontWeight: "800" }}>
-                                    {liveDuels.length}
-                                </Text>
-                            </View>
+                    <View style={{ marginTop: 20 }}>
+                        <View style={{ paddingHorizontal: 20 }}>
+                            <SectionHeader
+                                label="Live Duels"
+                                count={liveDuels.length}
+                                color={theme.green}
+                                theme={theme}
+                            />
                         </View>
 
-                        {/* Horizontal scroll carousel */}
                         <FlatList
                             data={liveDuels}
                             keyExtractor={(item) => item.id}
@@ -233,44 +270,14 @@ export default function HomeScreen() {
                     </View>
                 )}
 
-                {/* ═══ OPEN CHALLENGES ─ 2-column grid ═══ */}
+                {/* ═══ OPEN CHALLENGES — 2-column grid ═══ */}
                 <View style={{ marginTop: 22, paddingHorizontal: 20 }}>
-                    {/* Section header */}
-                    <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
-                        <View style={{
-                            width: 6,
-                            height: 6,
-                            borderRadius: 3,
-                            backgroundColor: theme.blue,
-                            shadowColor: theme.blue,
-                            shadowOpacity: 0.9,
-                            shadowRadius: 6,
-                            shadowOffset: { width: 0, height: 0 },
-                            marginRight: 8,
-                        }} />
-                        <Text style={{
-                            color: theme.textPrimary,
-                            fontSize: 12,
-                            fontWeight: "800",
-                            letterSpacing: 1.2,
-                            textTransform: "uppercase",
-                            flex: 1,
-                        }}>
-                            Open Challenges
-                        </Text>
-                        <View style={{
-                            backgroundColor: theme.blue + "18",
-                            borderWidth: 1,
-                            borderColor: theme.blue + "35",
-                            borderRadius: 100,
-                            paddingHorizontal: 8,
-                            paddingVertical: 2,
-                        }}>
-                            <Text style={{ color: theme.blue, fontSize: 10, fontWeight: "800" }}>
-                                {openDuels.length}
-                            </Text>
-                        </View>
-                    </View>
+                    <SectionHeader
+                        label="Open Challenges"
+                        count={openDuels.length}
+                        color={theme.blue}
+                        theme={theme}
+                    />
 
                     {openDuels.length > 0 ? (
                         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
@@ -295,43 +302,14 @@ export default function HomeScreen() {
                     )}
                 </View>
 
-                {/* ═══ RECENT RESULTS ─ compact list ═══ */}
+                {/* ═══ RECENT RESULTS ═══ */}
                 <View style={{ marginTop: 22, paddingHorizontal: 20 }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
-                        <View style={{
-                            width: 6,
-                            height: 6,
-                            borderRadius: 3,
-                            backgroundColor: theme.amber,
-                            shadowColor: theme.amber,
-                            shadowOpacity: 0.9,
-                            shadowRadius: 6,
-                            shadowOffset: { width: 0, height: 0 },
-                            marginRight: 8,
-                        }} />
-                        <Text style={{
-                            color: theme.textPrimary,
-                            fontSize: 12,
-                            fontWeight: "800",
-                            letterSpacing: 1.2,
-                            textTransform: "uppercase",
-                            flex: 1,
-                        }}>
-                            Recent Results
-                        </Text>
-                        <View style={{
-                            backgroundColor: theme.amber + "18",
-                            borderWidth: 1,
-                            borderColor: theme.amber + "35",
-                            borderRadius: 100,
-                            paddingHorizontal: 8,
-                            paddingVertical: 2,
-                        }}>
-                            <Text style={{ color: theme.amber, fontSize: 10, fontWeight: "800" }}>
-                                {settledDuels.length}
-                            </Text>
-                        </View>
-                    </View>
+                    <SectionHeader
+                        label="Recent Results"
+                        count={settledDuels.length}
+                        color={theme.amber}
+                        theme={theme}
+                    />
 
                     {settledDuels.length > 0 ? (
                         settledDuels.map((duel) => (

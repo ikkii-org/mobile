@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Connection, PublicKey, Transaction, clusterApiUrl } from "@solana/web3.js";
 import { transact, Web3MobileWallet } from "@solana-mobile/mobile-wallet-adapter-protocol-web3js";
 import { Button } from "../../components/ui/Button";
+import { Card } from "../../components/ui/Card";
 import { Modal } from "../../components/ui/Modal";
 import { Input } from "../../components/ui/Input";
 import { EmptyState } from "../../components/ui/EmptyState";
@@ -102,47 +103,60 @@ function TransactionRow({ tx }: { tx: TxType }) {
     const isPositive = tx.amount > 0;
 
     return (
-        <View style={{
-            flexDirection: "row",
-            alignItems: "center",
-            paddingVertical: 12,
-            paddingHorizontal: 14,
+        <Card noFill noPadding style={{
+            borderRadius: 10,
             marginBottom: 6,
-            backgroundColor: theme.bgCard,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: theme.border,
         }}>
-            {/* Icon */}
             <View style={{
-                width: 34,
-                height: 34,
-                borderRadius: 10,
+                flexDirection: "row",
                 alignItems: "center",
-                justifyContent: "center",
-                marginRight: 10,
-                backgroundColor: style.color + "15",
-                borderWidth: 1,
-                borderColor: style.color + "30",
+                paddingVertical: 12,
+                paddingHorizontal: 14,
             }}>
-                <Ionicons name={style.icon} size={14} color={style.color} />
-            </View>
-            <View style={{ flex: 1 }}>
-                <Text style={{ color: theme.textPrimary, fontSize: 12, fontWeight: "700" }}>
-                    {tx.type}
+                {/* Vertical accent bar */}
+                <View style={{
+                    position: "absolute",
+                    left: 0,
+                    top: 8,
+                    bottom: 8,
+                    width: 3,
+                    backgroundColor: style.color + "60",
+                    borderTopRightRadius: 2,
+                    borderBottomRightRadius: 2,
+                }} />
+                {/* Icon */}
+                <View style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 8,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: 10,
+                    marginLeft: 6,
+                    backgroundColor: style.color + "15",
+                    borderWidth: 1,
+                    borderColor: style.color + "30",
+                }}>
+                    <Ionicons name={style.icon} size={14} color={style.color} />
+                </View>
+                <View style={{ flex: 1 }}>
+                    <Text style={{ color: theme.textPrimary, fontSize: 12, fontWeight: "800", letterSpacing: 0.5 }}>
+                        {tx.type}
+                    </Text>
+                    <Text style={{ color: theme.textMuted, fontSize: 10, marginTop: 1, fontFamily: "monospace" }}>
+                        {new Date(tx.date).toLocaleDateString()}
+                    </Text>
+                </View>
+                <Text style={{
+                    fontSize: 13,
+                    fontWeight: "900",
+                    color: isPositive ? theme.green : theme.red,
+                    letterSpacing: -0.3,
+                }}>
+                    {isPositive ? "+" : ""}{tx.amount.toLocaleString()} USDC
                 </Text>
-                <Text style={{ color: theme.textMuted, fontSize: 10, marginTop: 1 }}>
-                    {new Date(tx.date).toLocaleDateString()}
-                </Text>
             </View>
-            <Text style={{
-                fontSize: 13,
-                fontWeight: "800",
-                color: isPositive ? theme.green : theme.red,
-            }}>
-                {isPositive ? "+" : ""}{tx.amount.toLocaleString()} USDC
-            </Text>
-        </View>
+        </Card>
     );
 }
 
@@ -286,39 +300,46 @@ export default function WalletScreen() {
             >
                 {/* ═══ HEADER ═══ */}
                 <View style={{ paddingHorizontal: 20, paddingTop: 64, paddingBottom: 4 }}>
-                    <Text style={{
-                        color: theme.textPrimary,
-                        fontSize: 26,
-                        fontWeight: "900",
-                        letterSpacing: 2,
-                    }}>
-                        VAULT
-                    </Text>
-                    <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 2, letterSpacing: 0.2 }}>
-                        Escrow balances & on-chain assets
-                    </Text>
+                    <View style={{ flexDirection: "row", alignItems: "center" }}>
+                        <View style={{ width: 4, height: 28, backgroundColor: theme.accent, borderRadius: 2, marginRight: 12 }} />
+                        <View>
+                            <Text style={{
+                                color: theme.textPrimary,
+                                fontSize: 26,
+                                fontWeight: "900",
+                                letterSpacing: 2,
+                            }}>
+                                VAULT
+                            </Text>
+                            <Text style={{ color: theme.textMuted, fontSize: 11, marginTop: 2, letterSpacing: 0.5 }}>
+                                Escrow balances & on-chain assets
+                            </Text>
+                        </View>
+                    </View>
                 </View>
 
                 {/* ═══ HERO: Ring Chart Dashboard ═══ */}
-                <View style={{
-                    marginHorizontal: 20,
-                    marginTop: 16,
-                    backgroundColor: theme.bgGlass,
-                    borderRadius: 22,
-                    borderWidth: 1,
-                    borderColor: theme.borderStrong,
-                    overflow: "hidden",
-                }}>
-                    <View style={{ height: 3, backgroundColor: theme.accent }} />
+                <Card
+                    noPadding
+                    style={{
+                        marginHorizontal: 20,
+                        marginTop: 16,
+                        backgroundColor: theme.bgGlass,
+                        borderColor: theme.borderNeon,
+                    }}
+                >
                     <View style={{ padding: 22, alignItems: "center" }}>
                         {/* Ring chart */}
                         <RingChart available={available} locked={locked} size={150} />
 
-                        {/* Legend row below chart */}
-                        <View style={{ flexDirection: "row", gap: 20, marginTop: 16 }}>
+                        {/* Tech divider */}
+                        <View style={{ width: "60%", height: 1, backgroundColor: theme.divider, marginTop: 18, marginBottom: 14 }} />
+
+                        {/* Legend row below chart — square dots */}
+                        <View style={{ flexDirection: "row", gap: 20 }}>
                             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: theme.green }} />
-                                <Text style={{ color: theme.textSecondary, fontSize: 11, fontWeight: "600" }}>
+                                <View style={{ width: 6, height: 6, borderRadius: 1, backgroundColor: theme.green }} />
+                                <Text style={{ color: theme.textSecondary, fontSize: 10, fontWeight: "700", letterSpacing: 0.5, textTransform: "uppercase" }}>
                                     Available
                                 </Text>
                                 <Text style={{ color: theme.green, fontSize: 11, fontWeight: "800" }}>
@@ -326,8 +347,8 @@ export default function WalletScreen() {
                                 </Text>
                             </View>
                             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: theme.amber }} />
-                                <Text style={{ color: theme.textSecondary, fontSize: 11, fontWeight: "600" }}>
+                                <View style={{ width: 6, height: 6, borderRadius: 1, backgroundColor: theme.amber }} />
+                                <Text style={{ color: theme.textSecondary, fontSize: 10, fontWeight: "700", letterSpacing: 0.5, textTransform: "uppercase" }}>
                                     Locked
                                 </Text>
                                 <Text style={{ color: theme.amber, fontSize: 11, fontWeight: "800" }}>
@@ -336,7 +357,7 @@ export default function WalletScreen() {
                             </View>
                         </View>
                     </View>
-                </View>
+                </Card>
 
                 {/* ═══ ACTION BUTTONS ═══ */}
                 <View style={{ flexDirection: "row", gap: 10, paddingHorizontal: 20, marginTop: 14 }}>
@@ -360,97 +381,99 @@ export default function WalletScreen() {
 
                 {/* ═══ wSOL CLAIMABLE BANNER ═══ */}
                 {balanceWsol != null && balanceWsol > 0 && (
-                    <View style={{
-                        marginHorizontal: 20,
-                        marginTop: 14,
-                        backgroundColor: theme.green + "12",
-                        borderRadius: 16,
-                        borderWidth: 1,
-                        borderColor: theme.green + "35",
-                        padding: 16,
-                    }}>
-                        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-                            <View style={{
-                                width: 32,
-                                height: 32,
-                                borderRadius: 10,
-                                backgroundColor: theme.green + "20",
-                                borderWidth: 1,
-                                borderColor: theme.green + "40",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                marginRight: 10,
-                            }}>
-                                <Ionicons name="gift" size={16} color={theme.green} />
-                            </View>
-                            <View style={{ flex: 1 }}>
-                                <Text style={{
-                                    color: theme.green,
-                                    fontSize: 10,
-                                    fontWeight: "800",
-                                    letterSpacing: 1.2,
-                                    textTransform: "uppercase",
+                    <Card
+                        noPadding
+                        accent={theme.green}
+                        style={{
+                            marginHorizontal: 20,
+                            marginTop: 14,
+                            backgroundColor: theme.green + "12",
+                            borderColor: theme.green + "35",
+                            borderRadius: 12,
+                        }}
+                    >
+                        <View style={{ padding: 16 }}>
+                            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
+                                <View style={{
+                                    width: 32,
+                                    height: 32,
+                                    borderRadius: 8,
+                                    backgroundColor: theme.green + "20",
+                                    borderWidth: 1,
+                                    borderColor: theme.green + "40",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    marginRight: 10,
                                 }}>
-                                    Claimable Winnings
-                                </Text>
-                                <Text style={{
-                                    color: theme.textPrimary,
-                                    fontSize: 20,
-                                    fontWeight: "900",
-                                    marginTop: 2,
-                                    letterSpacing: -0.3,
-                                }}>
-                                    {balanceWsol.toFixed(4)} SOL
-                                </Text>
-                            </View>
-                        </View>
-                        <Text style={{
-                            color: theme.textMuted,
-                            fontSize: 11,
-                            marginBottom: 12,
-                            lineHeight: 16,
-                        }}>
-                            You have wrapped SOL from duel winnings. Claim to unwrap it into your wallet as native SOL.
-                        </Text>
-                        <Pressable
-                            onPress={handleClaimWsol}
-                            disabled={claimLoading}
-                            style={{
-                                backgroundColor: theme.green,
-                                borderRadius: 10,
-                                paddingVertical: 11,
-                                alignItems: "center",
-                                justifyContent: "center",
-                                flexDirection: "row",
-                                gap: 6,
-                                opacity: claimLoading ? 0.6 : 1,
-                            }}
-                        >
-                            {claimLoading ? (
-                                <ActivityIndicator size="small" color="#FFFFFF" />
-                            ) : (
-                                <>
-                                    <Ionicons name="wallet" size={15} color="#FFFFFF" />
-                                    <Text style={{ color: "#FFFFFF", fontSize: 13, fontWeight: "800" }}>
-                                        Claim to Wallet
+                                    <Ionicons name="gift" size={16} color={theme.green} />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={{
+                                        color: theme.green,
+                                        fontSize: 9,
+                                        fontWeight: "800",
+                                        letterSpacing: 2,
+                                        textTransform: "uppercase",
+                                    }}>
+                                        Claimable Winnings
                                     </Text>
-                                </>
-                            )}
-                        </Pressable>
-                    </View>
+                                    <Text style={{
+                                        color: theme.textPrimary,
+                                        fontSize: 20,
+                                        fontWeight: "900",
+                                        marginTop: 2,
+                                        letterSpacing: -0.5,
+                                    }}>
+                                        {balanceWsol.toFixed(4)} SOL
+                                    </Text>
+                                </View>
+                            </View>
+                            <Text style={{
+                                color: theme.textMuted,
+                                fontSize: 11,
+                                marginBottom: 12,
+                                lineHeight: 16,
+                            }}>
+                                You have wrapped SOL from duel winnings. Claim to unwrap it into your wallet as native SOL.
+                            </Text>
+                            <Pressable
+                                onPress={handleClaimWsol}
+                                disabled={claimLoading}
+                                style={{
+                                    backgroundColor: theme.green,
+                                    borderRadius: 8,
+                                    paddingVertical: 11,
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    flexDirection: "row",
+                                    gap: 6,
+                                    opacity: claimLoading ? 0.6 : 1,
+                                }}
+                            >
+                                {claimLoading ? (
+                                    <ActivityIndicator size="small" color="#FFFFFF" />
+                                ) : (
+                                    <>
+                                        <Ionicons name="wallet" size={15} color="#FFFFFF" />
+                                        <Text style={{ color: "#FFFFFF", fontSize: 12, fontWeight: "800", letterSpacing: 1 }}>
+                                            CLAIM TO WALLET
+                                        </Text>
+                                    </>
+                                )}
+                            </Pressable>
+                        </View>
+                    </Card>
                 )}
 
                 {/* ═══ ASSET GRID (2x2) ═══ */}
                 <View style={{ paddingHorizontal: 20, marginTop: 18 }}>
+                    {/* SectionHeader: bar + dot pattern */}
                     <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-                        <View style={{
-                            width: 6, height: 6, borderRadius: 3, backgroundColor: theme.accent,
-                            shadowColor: theme.accentGlow, shadowOpacity: 0.9, shadowRadius: 6,
-                            shadowOffset: { width: 0, height: 0 }, marginRight: 8,
-                        }} />
+                        <View style={{ width: 12, height: 2, backgroundColor: theme.accent, borderRadius: 1, marginRight: 4 }} />
+                        <View style={{ width: 4, height: 4, borderRadius: 1, backgroundColor: theme.accent, marginRight: 8 }} />
                         <Text style={{
-                            color: theme.textPrimary, fontSize: 12, fontWeight: "800",
-                            letterSpacing: 1.2, textTransform: "uppercase",
+                            color: theme.textPrimary, fontSize: 11, fontWeight: "800",
+                            letterSpacing: 2, textTransform: "uppercase", flex: 1,
                         }}>
                             Assets
                         </Text>
@@ -463,49 +486,51 @@ export default function WalletScreen() {
                             { label: "Wallet USDC", value: balanceUsdc !== null ? formatBalance(balanceUsdc) : "0.00", icon: "card" as keyof typeof Ionicons.glyphMap, color: theme.blue },
                             { label: "SOL", value: balanceSol !== null ? balanceSol.toFixed(2) : "0.00", icon: "wallet-outline" as keyof typeof Ionicons.glyphMap, color: theme.accentLight },
                         ].map((asset) => (
-                            <View
+                            <Card
                                 key={asset.label}
+                                noFill
+                                noPadding
                                 style={{
                                     width: "48%",
-                                    backgroundColor: theme.bgCard,
-                                    borderRadius: 14,
-                                    padding: 14,
-                                    borderWidth: 1,
-                                    borderColor: theme.border,
+                                    borderRadius: 12,
                                 }}
                             >
-                                <View style={{
-                                    width: 28, height: 28, borderRadius: 8,
-                                    backgroundColor: asset.color + "18", borderWidth: 1, borderColor: asset.color + "30",
-                                    alignItems: "center", justifyContent: "center", marginBottom: 8,
-                                }}>
-                                    <Ionicons name={asset.icon} size={13} color={asset.color} />
+                                {/* Top accent line */}
+                                <View style={{ alignItems: "center" }}>
+                                    <View style={{ width: "40%", height: 2, backgroundColor: asset.color + "50", borderBottomLeftRadius: 1, borderBottomRightRadius: 1 }} />
                                 </View>
-                                <Text style={{ color: asset.color, fontSize: 16, fontWeight: "900", letterSpacing: -0.3 }}>
-                                    {asset.value}
-                                </Text>
-                                <Text style={{
-                                    color: theme.textMuted, fontSize: 9, letterSpacing: 1.2,
-                                    textTransform: "uppercase", fontWeight: "700", marginTop: 3,
-                                }}>
-                                    {asset.label}
-                                </Text>
-                            </View>
+                                <View style={{ padding: 14 }}>
+                                    <View style={{
+                                        width: 28, height: 28, borderRadius: 7,
+                                        backgroundColor: asset.color + "18", borderWidth: 1, borderColor: asset.color + "30",
+                                        alignItems: "center", justifyContent: "center", marginBottom: 8,
+                                    }}>
+                                        <Ionicons name={asset.icon} size={13} color={asset.color} />
+                                    </View>
+                                    <Text style={{ color: asset.color, fontSize: 16, fontWeight: "900", letterSpacing: -0.5 }}>
+                                        {asset.value}
+                                    </Text>
+                                    <Text style={{
+                                        color: theme.textMuted, fontSize: 9, letterSpacing: 2,
+                                        textTransform: "uppercase", fontWeight: "700", marginTop: 3,
+                                    }}>
+                                        {asset.label}
+                                    </Text>
+                                </View>
+                            </Card>
                         ))}
                     </View>
                 </View>
 
                 {/* ═══ RECENT ACTIVITY ═══ */}
                 <View style={{ paddingHorizontal: 20, marginTop: 22 }}>
+                    {/* SectionHeader: bar + dot pattern */}
                     <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-                        <View style={{
-                            width: 6, height: 6, borderRadius: 3, backgroundColor: theme.accent,
-                            shadowColor: theme.accentGlow, shadowOpacity: 0.9, shadowRadius: 6,
-                            shadowOffset: { width: 0, height: 0 }, marginRight: 8,
-                        }} />
+                        <View style={{ width: 12, height: 2, backgroundColor: theme.accent, borderRadius: 1, marginRight: 4 }} />
+                        <View style={{ width: 4, height: 4, borderRadius: 1, backgroundColor: theme.accent, marginRight: 8 }} />
                         <Text style={{
-                            color: theme.textPrimary, fontSize: 12, fontWeight: "800",
-                            letterSpacing: 1.2, textTransform: "uppercase",
+                            color: theme.textPrimary, fontSize: 11, fontWeight: "800",
+                            letterSpacing: 2, textTransform: "uppercase",
                         }}>
                             Recent Activity
                         </Text>

@@ -4,6 +4,7 @@ import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Avatar } from "../../components/ui/Avatar";
+import { Card } from "../../components/ui/Card";
 import { leaderboardAPI } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -81,21 +82,18 @@ function Podium({ entries, currentUsername }: { entries: LeaderboardEntry[]; cur
                                 borderRadius: 30,
                                 padding: 2,
                                 borderWidth: 2,
-                                borderColor: isCurrent ? theme.borderGlow : medalColor + "60",
-                                shadowColor: medalColor,
-                                shadowOpacity: 0.5,
-                                shadowRadius: 8,
-                                shadowOffset: { width: 0, height: 0 },
+                                borderColor: isCurrent ? theme.borderNeon : medalColor + "60",
                             }}>
                                 <Avatar username={entry.username} size={entry.rank === 1 ? "md" : "sm"} />
                             </View>
                             <Text
                                 style={{
                                     color: isCurrent ? theme.accentLight : theme.textPrimary,
-                                    fontWeight: "700",
+                                    fontWeight: "800",
                                     fontSize: 11,
                                     marginTop: 5,
                                     textAlign: "center",
+                                    letterSpacing: 0.3,
                                 }}
                                 numberOfLines={1}
                             >
@@ -107,8 +105,8 @@ function Podium({ entries, currentUsername }: { entries: LeaderboardEntry[]; cur
                         <View style={{
                             width: "100%",
                             height,
-                            borderTopLeftRadius: 12,
-                            borderTopRightRadius: 12,
+                            borderTopLeftRadius: 10,
+                            borderTopRightRadius: 10,
                             backgroundColor: medalColor + "18",
                             borderWidth: 1,
                             borderBottomWidth: 0,
@@ -116,24 +114,38 @@ function Podium({ entries, currentUsername }: { entries: LeaderboardEntry[]; cur
                             alignItems: "center",
                             justifyContent: "flex-start",
                             paddingTop: 10,
+                            overflow: "hidden",
                         }}>
+                            {/* Top accent line */}
+                            <View style={{
+                                position: "absolute",
+                                top: 0,
+                                left: "20%",
+                                right: "20%",
+                                height: 2,
+                                backgroundColor: medalColor + "70",
+                                borderBottomLeftRadius: 1,
+                                borderBottomRightRadius: 1,
+                            }} />
                             <Text style={{
                                 color: medalColor,
-                                fontSize: 10,
+                                fontSize: 9,
                                 fontWeight: "900",
-                                letterSpacing: 1,
+                                letterSpacing: 2,
+                                marginTop: 4,
                             }}>
                                 {crownLabels[i]}
                             </Text>
                             <Text style={{
                                 color: theme.green,
                                 fontSize: 12,
-                                fontWeight: "800",
+                                fontWeight: "900",
                                 marginTop: 4,
+                                letterSpacing: -0.3,
                             }}>
                                 {entry.totalStakeWon.toLocaleString()}
                             </Text>
-                            <Text style={{ color: theme.textMuted, fontSize: 9, marginTop: 2 }}>
+                            <Text style={{ color: theme.textMuted, fontSize: 9, marginTop: 2, fontWeight: "600" }}>
                                 {entry.winPercentage.toFixed(1)}%
                             </Text>
                         </View>
@@ -159,9 +171,9 @@ function LeaderboardCard({ entry, isCurrentUser }: { entry: LeaderboardEntry; is
                 marginBottom: 8,
                 padding: 12,
                 backgroundColor: isCurrentUser ? theme.accentBg : theme.bgCard,
-                borderRadius: 14,
+                borderRadius: 12,
                 borderWidth: 1,
-                borderColor: isCurrentUser ? theme.borderStrong : theme.border,
+                borderColor: isCurrentUser ? theme.borderNeon : theme.border,
                 opacity: pressed ? 0.9 : 1,
             })}
         >
@@ -169,13 +181,13 @@ function LeaderboardCard({ entry, isCurrentUser }: { entry: LeaderboardEntry; is
             <View style={{
                 width: 30,
                 height: 30,
-                borderRadius: 8,
+                borderRadius: 7,
                 backgroundColor: theme.bgMuted,
                 alignItems: "center",
                 justifyContent: "center",
                 marginRight: 10,
             }}>
-                <Text style={{ color: theme.textSecondary, fontSize: 12, fontWeight: "800" }}>
+                <Text style={{ color: theme.textSecondary, fontSize: 12, fontWeight: "900" }}>
                     {entry.rank}
                 </Text>
             </View>
@@ -187,8 +199,9 @@ function LeaderboardCard({ entry, isCurrentUser }: { entry: LeaderboardEntry; is
                     <Text
                         style={{
                             fontSize: 13,
-                            fontWeight: "700",
+                            fontWeight: "800",
                             color: isCurrentUser ? theme.accentLight : theme.textPrimary,
+                            letterSpacing: 0.3,
                         }}
                         numberOfLines={1}
                     >
@@ -197,29 +210,29 @@ function LeaderboardCard({ entry, isCurrentUser }: { entry: LeaderboardEntry; is
                     {isCurrentUser && (
                         <View style={{
                             backgroundColor: theme.accent + "25",
-                            borderRadius: 20,
+                            borderRadius: 5,
                             paddingHorizontal: 5,
                             paddingVertical: 1,
                             borderWidth: 1,
-                            borderColor: theme.borderGlow,
+                            borderColor: theme.borderNeon,
                         }}>
-                            <Text style={{ color: theme.accentLight, fontSize: 7, fontWeight: "900", letterSpacing: 1 }}>
+                            <Text style={{ color: theme.accentLight, fontSize: 7, fontWeight: "900", letterSpacing: 1.5 }}>
                                 YOU
                             </Text>
                         </View>
                     )}
                 </View>
-                <Text style={{ color: theme.textMuted, fontSize: 10, marginTop: 2 }}>
+                <Text style={{ color: theme.textMuted, fontSize: 10, marginTop: 2, fontWeight: "600" }}>
                     {entry.wins}W – {entry.losses}L
                 </Text>
             </View>
 
             <View style={{ alignItems: "flex-end", gap: 3 }}>
-                <Text style={{ color: theme.green, fontSize: 12, fontWeight: "800" }}>
+                <Text style={{ color: theme.green, fontSize: 12, fontWeight: "900", letterSpacing: -0.3 }}>
                     {entry.totalStakeWon.toLocaleString()}
                 </Text>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                    <Text style={{ color: theme.textMuted, fontSize: 9, fontWeight: "600" }}>
+                    <Text style={{ color: theme.textMuted, fontSize: 9, fontWeight: "700" }}>
                         {entry.winPercentage.toFixed(1)}%
                     </Text>
                     <RankChangeIndicator current={entry.currentRank} previous={entry.previousRank} />
@@ -268,17 +281,22 @@ export default function LeaderboardScreen() {
         <>
             {/* Header */}
             <View style={{ paddingHorizontal: 20, paddingTop: 64, paddingBottom: 8 }}>
-                <Text style={{
-                    color: theme.textPrimary,
-                    fontSize: 26,
-                    fontWeight: "900",
-                    letterSpacing: 2,
-                }}>
-                    RANKINGS
-                </Text>
-                <Text style={{ color: theme.textMuted, fontSize: 12, letterSpacing: 0.2, marginTop: 2 }}>
-                    Top duelers on Ikkii Arena
-                </Text>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <View style={{ width: 4, height: 28, backgroundColor: theme.accent, borderRadius: 2, marginRight: 12 }} />
+                    <View>
+                        <Text style={{
+                            color: theme.textPrimary,
+                            fontSize: 26,
+                            fontWeight: "900",
+                            letterSpacing: 2,
+                        }}>
+                            RANKINGS
+                        </Text>
+                        <Text style={{ color: theme.textMuted, fontSize: 11, letterSpacing: 0.5, marginTop: 2 }}>
+                            Top duelers on Ikkii Arena
+                        </Text>
+                    </View>
+                </View>
             </View>
 
             {/* Podium */}
@@ -291,14 +309,14 @@ export default function LeaderboardScreen() {
             {/* My Rank Card (if not in top 3) */}
             {myEntry && myEntry.rank > 3 && (
                 <View style={{ paddingHorizontal: 20, marginBottom: 14 }}>
-                    <View style={{
-                        backgroundColor: theme.bgGlass,
-                        borderRadius: 16,
-                        borderWidth: 1,
-                        borderColor: theme.borderStrong,
-                        overflow: "hidden",
-                    }}>
-                        <View style={{ height: 2, backgroundColor: theme.accent }} />
+                    <Card
+                        noPadding
+                        style={{
+                            backgroundColor: theme.bgGlass,
+                            borderRadius: 12,
+                            borderColor: theme.borderNeon,
+                        }}
+                    >
                         <View style={{
                             flexDirection: "row",
                             alignItems: "center",
@@ -308,12 +326,12 @@ export default function LeaderboardScreen() {
                             <View style={{
                                 width: 44,
                                 height: 44,
-                                borderRadius: 12,
+                                borderRadius: 10,
                                 backgroundColor: theme.accentBg,
                                 alignItems: "center",
                                 justifyContent: "center",
                                 borderWidth: 1,
-                                borderColor: theme.borderGlow,
+                                borderColor: theme.borderNeon,
                                 marginRight: 12,
                             }}>
                                 <Text style={{ color: theme.accentLight, fontSize: 16, fontWeight: "900" }}>
@@ -323,15 +341,15 @@ export default function LeaderboardScreen() {
                             <View style={{ flex: 1 }}>
                                 <Text style={{
                                     color: theme.accentLight,
-                                    fontSize: 11,
+                                    fontSize: 9,
                                     fontWeight: "800",
-                                    letterSpacing: 1,
+                                    letterSpacing: 2,
                                     textTransform: "uppercase",
                                 }}>
                                     Your Rank
                                 </Text>
                                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 3 }}>
-                                    <Text style={{ color: theme.textMuted, fontSize: 11 }}>
+                                    <Text style={{ color: theme.textMuted, fontSize: 11, fontWeight: "600" }}>
                                         {myEntry.wins}W – {myEntry.losses}L
                                     </Text>
                                     <RankChangeIndicator
@@ -341,13 +359,13 @@ export default function LeaderboardScreen() {
                                 </View>
                             </View>
                             <View style={{ alignItems: "flex-end" }}>
-                                <Text style={{ color: theme.textPrimary, fontSize: 20, fontWeight: "900" }}>
+                                <Text style={{ color: theme.textPrimary, fontSize: 20, fontWeight: "900", letterSpacing: -0.5 }}>
                                     {myEntry.winPercentage.toFixed(1)}%
                                 </Text>
                                 <Text style={{
                                     color: theme.textMuted,
                                     fontSize: 8,
-                                    letterSpacing: 1.2,
+                                    letterSpacing: 2,
                                     textTransform: "uppercase",
                                     fontWeight: "700",
                                     marginTop: 1,
@@ -356,11 +374,11 @@ export default function LeaderboardScreen() {
                                 </Text>
                             </View>
                         </View>
-                    </View>
+                    </Card>
                 </View>
             )}
 
-            {/* All Players section header */}
+            {/* All Players section header — bar + dot */}
             <View style={{
                 flexDirection: "row",
                 alignItems: "center",
@@ -368,20 +386,17 @@ export default function LeaderboardScreen() {
                 paddingBottom: 10,
                 marginTop: 4,
             }}>
-                <View style={{
-                    width: 6, height: 6, borderRadius: 3, backgroundColor: theme.accent,
-                    shadowColor: theme.accentGlow, shadowOpacity: 0.9, shadowRadius: 6,
-                    shadowOffset: { width: 0, height: 0 }, marginRight: 8,
-                }} />
+                <View style={{ width: 12, height: 2, backgroundColor: theme.accent, borderRadius: 1, marginRight: 4 }} />
+                <View style={{ width: 4, height: 4, borderRadius: 1, backgroundColor: theme.accent, marginRight: 8 }} />
                 <Text style={{
-                    color: theme.textPrimary, fontSize: 12, fontWeight: "800",
-                    letterSpacing: 1.2, textTransform: "uppercase", flex: 1,
+                    color: theme.textPrimary, fontSize: 11, fontWeight: "800",
+                    letterSpacing: 2, textTransform: "uppercase", flex: 1,
                 }}>
                     All Players
                 </Text>
                 <View style={{
                     backgroundColor: theme.bgMuted, borderWidth: 1, borderColor: theme.border,
-                    borderRadius: 10, paddingHorizontal: 7, paddingVertical: 2,
+                    borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2,
                 }}>
                     <Text style={{ color: theme.textMuted, fontSize: 10, fontWeight: "700" }}>
                         {entries.length}

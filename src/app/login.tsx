@@ -12,6 +12,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
+import { Card } from "../components/ui/Card";
 import { useToast } from "../contexts/ToastContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -92,16 +93,13 @@ export default function LoginScreen() {
                     </View>
 
                     {/* Form card */}
-                    <View style={{
+                    <Card noPadding style={{
                         backgroundColor: theme.bgGlass,
                         borderRadius: 20,
-                        borderWidth: 1,
                         borderColor: theme.borderStrong,
-                        padding: 20,
                         marginBottom: 20,
-                        overflow: "hidden",
                     }}>
-                        <View style={{ height: 2, backgroundColor: theme.accent, marginHorizontal: -20, marginTop: -20, marginBottom: 20 }} />
+                        <View style={{ padding: 20 }}>
 
                         <Input
                             label="Username"
@@ -133,7 +131,8 @@ export default function LoginScreen() {
                             size="lg"
                                                          icon={<Ionicons name="flash" size={16} color={theme.textInverse} />}
                         />
-                    </View>
+                        </View>
+                    </Card>
 
                     <Pressable
                         onPress={() => router.push("/signup")}

@@ -32,19 +32,19 @@ export function Button({
     };
 
     const sizeStyles = {
-        sm: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 12, fontSize: 11 },
-        md: { paddingVertical: 14, paddingHorizontal: 22, borderRadius: 14, fontSize: 13 },
-        lg: { paddingVertical: 16, paddingHorizontal: 28, borderRadius: 16, fontSize: 15 },
+        sm: { paddingVertical: 9, paddingHorizontal: 14, borderRadius: 8, fontSize: 10 },
+        md: { paddingVertical: 13, paddingHorizontal: 20, borderRadius: 10, fontSize: 12 },
+        lg: { paddingVertical: 15, paddingHorizontal: 26, borderRadius: 12, fontSize: 14 },
     }[size];
 
     const variantStyles = {
         primary: {
             background: theme.accent,
-            borderColor: theme.accentLight,
+            borderColor: theme.accentNeon,
             textColor: theme.textInverse,
         },
         secondary: {
-            background: "transparent",
+            background: theme.accentBg,
             borderColor: theme.btnSecondaryBorder,
             textColor: theme.accentLight,
         },
@@ -68,7 +68,7 @@ export function Button({
                 flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: 8,
+                gap: 7,
                 backgroundColor: variantStyles.background,
                 borderWidth: 1,
                 borderColor: variantStyles.borderColor,
@@ -76,7 +76,7 @@ export function Button({
                 paddingVertical: sizeStyles.paddingVertical,
                 paddingHorizontal: sizeStyles.paddingHorizontal,
                 width: fullWidth ? "100%" : undefined,
-                opacity: disabled || loading ? 0.45 : pressed ? 0.78 : 1,
+                opacity: disabled || loading ? 0.4 : pressed ? 0.75 : 1,
             })}
         >
             {loading ? (
@@ -88,8 +88,8 @@ export function Button({
                         style={{
                             color: variantStyles.textColor,
                             fontSize: sizeStyles.fontSize,
-                            fontWeight: "700",
-                            letterSpacing: 0.6,
+                            fontWeight: "800",
+                            letterSpacing: 1.5,
                             textTransform: "uppercase",
                         }}
                     >

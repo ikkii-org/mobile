@@ -12,6 +12,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
+import { Card } from "../components/ui/Card";
 import { useToast } from "../contexts/ToastContext";
 import { REGEX } from "../constants";
 import { useWallet } from "../components/WalletProvider";
@@ -99,16 +100,13 @@ export default function SignupScreen() {
                     </View>
 
                     {/* Form card */}
-                    <View style={{
+                    <Card noPadding style={{
                         backgroundColor: theme.bgGlass,
                         borderRadius: 20,
-                        borderWidth: 1,
                         borderColor: theme.borderStrong,
-                        padding: 20,
                         marginBottom: 16,
-                        overflow: "hidden",
                     }}>
-                        <View style={{ height: 2, backgroundColor: theme.accent, marginHorizontal: -20, marginTop: -20, marginBottom: 20 }} />
+                        <View style={{ padding: 20 }}>
 
                         <Input
                             label="Username"
@@ -234,7 +232,8 @@ export default function SignupScreen() {
                                 icon={<Ionicons name="flash" size={16} color={theme.textInverse} />}
                             />
                         </View>
-                    </View>
+                        </View>
+                    </Card>
 
                     <Pressable
                         onPress={() => router.push("/login")}
