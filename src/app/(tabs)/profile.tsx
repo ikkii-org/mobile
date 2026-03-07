@@ -166,7 +166,7 @@ export default function ProfileScreen() {
     if (loading || !user || !profile) {
         return (
             <View style={{ flex: 1, backgroundColor: theme.bg, alignItems: "center", justifyContent: "center" }}>
-                <StatusBar style={theme.isDark ? "light" : "dark"} />
+                <StatusBar style="dark" />
                 <ActivityIndicator size="large" color={theme.accent} />
             </View>
         );
@@ -179,7 +179,7 @@ export default function ProfileScreen() {
 
     return (
         <View style={{ flex: 1, backgroundColor: theme.bg }}>
-            <StatusBar style={theme.isDark ? "light" : "dark"} />
+            <StatusBar style="dark" />
             <ScrollView
                 style={{ flex: 1 }}
                 contentContainerStyle={{ paddingBottom: 40 }}
@@ -191,14 +191,9 @@ export default function ProfileScreen() {
                     marginHorizontal: 20,
                     marginTop: 64,
                     borderRadius: 22,
-                    borderWidth: 1.5,
-                    borderColor: theme.borderGlow,
+                    borderWidth: 1,
+                    borderColor: theme.borderStrong,
                     overflow: "hidden",
-                    shadowColor: theme.accentGlow,
-                    shadowOpacity: 0.3,
-                    shadowRadius: 20,
-                    shadowOffset: { width: 0, height: 6 },
-                    elevation: 8,
                 }}>
                     {/* Gradient-like accent bar */}
                     <View style={{ height: 3, backgroundColor: theme.accent }} />
@@ -419,28 +414,24 @@ export default function ProfileScreen() {
                                     label: "Total Won",
                                     value: profile.portfolio.totalStakeWon.toLocaleString(),
                                     color: theme.green,
-                                    glow: theme.greenGlow,
                                     icon: "arrow-up-circle" as keyof typeof Ionicons.glyphMap,
                                 },
                                 {
                                     label: "Total Lost",
                                     value: profile.portfolio.totalStakeLost.toLocaleString(),
                                     color: theme.red,
-                                    glow: theme.redGlow,
                                     icon: "arrow-down-circle" as keyof typeof Ionicons.glyphMap,
                                 },
                                 {
                                     label: "Net P&L",
                                     value: `${netPL >= 0 ? "+" : ""}${netPL.toLocaleString()}`,
                                     color: netPL >= 0 ? theme.green : theme.red,
-                                    glow: netPL >= 0 ? theme.greenGlow : theme.redGlow,
                                     icon: "stats-chart" as keyof typeof Ionicons.glyphMap,
                                 },
                                 {
                                     label: "SOL Balance",
                                     value: balanceSol !== null ? balanceSol.toFixed(2) : (profile.portfolio.solanaBalance ?? 0).toFixed(2),
                                     color: theme.accentLight,
-                                    glow: theme.accentGlow,
                                     icon: "wallet-outline" as keyof typeof Ionicons.glyphMap,
                                 },
                             ].map((stat) => (
@@ -453,11 +444,6 @@ export default function ProfileScreen() {
                                         padding: 14,
                                         borderWidth: 1,
                                         borderColor: theme.border,
-                                        shadowColor: stat.glow,
-                                        shadowOpacity: 0.3,
-                                        shadowRadius: 6,
-                                        shadowOffset: { width: 0, height: 2 },
-                                        elevation: 3,
                                     }}
                                 >
                                     <View style={{
@@ -656,62 +642,6 @@ export default function ProfileScreen() {
                             Settings
                         </Text>
                     </View>
-
-                    {/* Theme Toggle — card row */}
-                    <Pressable
-                        onPress={theme.toggleTheme}
-                        style={{
-                            flexDirection: "row",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            backgroundColor: theme.bgCard,
-                            borderRadius: 14,
-                            borderWidth: 1,
-                            borderColor: theme.border,
-                            paddingHorizontal: 14,
-                            paddingVertical: 13,
-                            marginBottom: 8,
-                        }}
-                    >
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                            <View style={{
-                                width: 30, height: 30, borderRadius: 8,
-                                backgroundColor: theme.accentBg, borderWidth: 1,
-                                borderColor: theme.borderGlow, alignItems: "center",
-                                justifyContent: "center",
-                            }}>
-                                <Ionicons
-                                    name={theme.isDark ? "moon" : "sunny"}
-                                    size={14}
-                                    color={theme.accentLight}
-                                />
-                            </View>
-                            <View>
-                                <Text style={{ color: theme.textPrimary, fontSize: 13, fontWeight: "700" }}>
-                                    {theme.isDark ? "Dark Mode" : "Light Mode"}
-                                </Text>
-                                <Text style={{ color: theme.textMuted, fontSize: 10, marginTop: 1 }}>
-                                    Tap to switch
-                                </Text>
-                            </View>
-                        </View>
-
-                        {/* Toggle track */}
-                        <View style={{
-                            width: 40, height: 24, borderRadius: 12,
-                            backgroundColor: theme.isDark ? theme.accent : theme.border,
-                            justifyContent: "center", paddingHorizontal: 3,
-                            shadowColor: theme.isDark ? theme.accentGlow : "transparent",
-                            shadowOpacity: 0.5, shadowRadius: 6,
-                            shadowOffset: { width: 0, height: 0 },
-                        }}>
-                            <View style={{
-                                width: 18, height: 18, borderRadius: 9,
-                                backgroundColor: theme.textInverse,
-                                alignSelf: theme.isDark ? "flex-end" : "flex-start",
-                            }} />
-                        </View>
-                    </Pressable>
 
                     {/* Logout — card row */}
                     <Pressable

@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
-import * as SecureStore from "expo-secure-store";
+import React, { createContext, useContext } from "react";
 
 // ---------------------------------------------------------------------------
 // Token definitions
@@ -29,8 +28,8 @@ export interface ThemeTokens {
     textInverse: string;
 
     // Accent — purple brand
-    accent: string;         // #8B5CF6
-    accentLight: string;    // lighter for text on dark bg
+    accent: string;
+    accentLight: string;    // darker shade for text
     accentBg: string;       // translucent tint
     accentGlow: string;     // glow shadow color (with alpha)
 
@@ -65,81 +64,24 @@ export interface ThemeTokens {
     // Misc
     shadow: string;
     overlay: string;
-    isDark: boolean;
 }
 
 // ---------------------------------------------------------------------------
-// Dark theme — deep space glassmorphism
+// Light theme — frosted glass on white (only theme)
 // ---------------------------------------------------------------------------
-const DARK: ThemeTokens = {
-    bg: "#050508",
-    bgDeep: "#020204",
-
-    bgCard: "rgba(255,255,255,0.05)",
-    bgCardAlt: "rgba(255,255,255,0.03)",
-    bgInput: "rgba(255,255,255,0.06)",
-    bgMuted: "rgba(255,255,255,0.04)",
-    bgGlass: "rgba(255,255,255,0.07)",
-
-    border: "rgba(255,255,255,0.09)",
-    borderStrong: "rgba(255,255,255,0.15)",
-    borderGlow: "rgba(139,92,246,0.45)",
-
-    textPrimary: "#F1F0FF",
-    textSecondary: "#9B97C0",
-    textMuted: "#4D4A6B",
-    textInverse: "#FFFFFF",
-
-    accent: "#8B5CF6",
-    accentLight: "#A78BFA",
-    accentBg: "rgba(139,92,246,0.12)",
-    accentGlow: "rgba(139,92,246,0.35)",
-
-    green: "#22D3A5",
-    greenGlow: "rgba(34,211,165,0.30)",
-    red: "#F43F5E",
-    redGlow: "rgba(244,63,94,0.30)",
-    amber: "#FBBF24",
-    blue: "#60A5FA",
-    grey: "#3D3A52",
-
-    badgeOpenBg: "rgba(96,165,250,0.12)",
-    badgeActiveBg: "rgba(34,211,165,0.12)",
-    badgeDisputedBg: "rgba(244,63,94,0.12)",
-    badgeSettledBg: "rgba(251,191,36,0.12)",
-    badgeCancelledBg: "rgba(100,100,120,0.12)",
-
-    btnDangerBg: "rgba(244,63,94,0.15)",
-    btnDangerBorder: "#F43F5E",
-    btnDangerText: "#F87171",
-    btnSecondaryBorder: "rgba(255,255,255,0.15)",
-
-    tabBarBg: "rgba(8,6,20,0.92)",
-    tabBarBorder: "rgba(255,255,255,0.07)",
-    tabBarActive: "#A78BFA",
-    tabBarInactive: "#3D3A52",
-
-    shadow: "#000000",
-    overlay: "rgba(0,0,0,0.75)",
-    isDark: true,
-};
-
-// ---------------------------------------------------------------------------
-// Light theme — frosted glass on white
-// ---------------------------------------------------------------------------
-const LIGHT: ThemeTokens = {
+const THEME: ThemeTokens = {
     bg: "#F0EFFC",
     bgDeep: "#E8E7F7",
 
-    bgCard: "rgba(255,255,255,0.80)",
-    bgCardAlt: "rgba(255,255,255,0.60)",
-    bgInput: "rgba(255,255,255,0.90)",
+    bgCard: "rgba(255,255,255,0.75)",
+    bgCardAlt: "rgba(255,255,255,0.55)",
+    bgInput: "rgba(255,255,255,0.85)",
     bgMuted: "rgba(139,92,246,0.06)",
-    bgGlass: "rgba(255,255,255,0.92)",
+    bgGlass: "rgba(255,255,255,0.82)",
 
-    border: "rgba(139,92,246,0.12)",
-    borderStrong: "rgba(139,92,246,0.22)",
-    borderGlow: "rgba(139,92,246,0.40)",
+    border: "rgba(139,92,246,0.14)",
+    borderStrong: "rgba(139,92,246,0.24)",
+    borderGlow: "rgba(139,92,246,0.35)",
 
     textPrimary: "#1A1730",
     textSecondary: "#5B5680",
@@ -177,51 +119,24 @@ const LIGHT: ThemeTokens = {
 
     shadow: "rgba(139,92,246,0.15)",
     overlay: "rgba(0,0,0,0.45)",
-    isDark: false,
 };
 
 // ---------------------------------------------------------------------------
 // Context
 // ---------------------------------------------------------------------------
 
-export type FlatTheme = ThemeTokens & { toggleTheme: () => void };
-
-const ThemeContext = createContext<FlatTheme>({
-    ...LIGHT,
-    toggleTheme: () => {},
-});
-
-const STORAGE_KEY = "ikkii_theme";
+const ThemeContext = createContext<ThemeTokens>(THEME);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-    const [mode, setMode] = useState<"light" | "dark">("dark");
-
-    React.useEffect(() => {
-        SecureStore.getItemAsync(STORAGE_KEY).then((saved) => {
-            if (saved === "dark" || saved === "light") setMode(saved);
-        });
-    }, []);
-
-    const toggleTheme = useCallback(() => {
-        setMode((prev) => {
-            const next = prev === "dark" ? "light" : "dark";
-            SecureStore.setItemAsync(STORAGE_KEY, next);
-            return next;
-        });
-    }, []);
-
-    const tokens = mode === "dark" ? DARK : LIGHT;
-    const value: FlatTheme = { ...tokens, toggleTheme };
-
     return (
-        <ThemeContext.Provider value={value}>
+        <ThemeContext.Provider value={THEME}>
             {children}
         </ThemeContext.Provider>
     );
 }
 
-// Returns flat tokens + toggleTheme.
-// Usage: const theme = useTheme(); then theme.bg, theme.isDark, theme.toggleTheme()
-export function useTheme(): FlatTheme {
+// Returns flat theme tokens.
+// Usage: const theme = useTheme(); then theme.bg, theme.accent, etc.
+export function useTheme(): ThemeTokens {
     return useContext(ThemeContext);
 }

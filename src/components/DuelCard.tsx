@@ -85,15 +85,10 @@ export function DuelCard({ duel, currentUsername, onPress, onAction, variant = "
                     width: 172,
                     backgroundColor: theme.bgCard,
                     borderWidth: 1,
-                    borderColor: pressed ? theme.borderGlow : theme.border,
+                    borderColor: pressed ? theme.borderStrong : theme.border,
                     borderRadius: 16,
                     overflow: "hidden",
                     opacity: pressed ? 0.92 : 1,
-                    shadowColor: glowColor,
-                    shadowOpacity: pressed ? 0.5 : 0.2,
-                    shadowRadius: 12,
-                    shadowOffset: { width: 0, height: 4 },
-                    elevation: 4,
                 })}
             >
                 {/* Status color bar */}
@@ -171,10 +166,6 @@ export function DuelCard({ duel, currentUsername, onPress, onAction, variant = "
                                 paddingVertical: 6,
                                 borderRadius: 8,
                                 alignItems: "center",
-                                shadowColor: theme.accentGlow,
-                                shadowOpacity: 0.6,
-                                shadowRadius: 8,
-                                shadowOffset: { width: 0, height: 2 },
                             })}
                         >
                             <Text style={{ color: theme.textInverse, fontSize: 10, fontWeight: "800", letterSpacing: 0.8 }}>
@@ -222,16 +213,11 @@ export function DuelCard({ duel, currentUsername, onPress, onAction, variant = "
             style={({ pressed }) => ({
                 backgroundColor: theme.bgCard,
                 borderWidth: 1,
-                borderColor: pressed ? theme.borderGlow : theme.border,
+                borderColor: pressed ? theme.borderStrong : theme.border,
                 borderRadius: 16,
                 marginBottom: 10,
                 overflow: "hidden",
                 opacity: pressed ? 0.92 : 1,
-                shadowColor: glowColor,
-                shadowOpacity: pressed ? 0.4 : 0.15,
-                shadowRadius: 12,
-                shadowOffset: { width: 0, height: 3 },
-                elevation: 4,
             })}
         >
             {/* Left accent stripe */}
@@ -363,10 +349,6 @@ export function DuelCard({ duel, currentUsername, onPress, onAction, variant = "
                                     borderRadius: 100,
                                     borderWidth: 1,
                                     borderColor: theme.green + "50",
-                                    shadowColor: theme.greenGlow,
-                                    shadowOpacity: 0.6,
-                                    shadowRadius: 6,
-                                    shadowOffset: { width: 0, height: 0 },
                                 }}>
                                     <Ionicons name="trophy" size={10} color={theme.green} />
                                     <Text style={{ color: theme.green, fontSize: 10, fontWeight: "800" }}>WIN</Text>
@@ -399,11 +381,6 @@ export function DuelCard({ duel, currentUsername, onPress, onAction, variant = "
                                         paddingHorizontal: 14,
                                         paddingVertical: 6,
                                         borderRadius: 8,
-                                        shadowColor: theme.accentGlow,
-                                        shadowOpacity: pressed ? 0.7 : 0.5,
-                                        shadowRadius: 8,
-                                        shadowOffset: { width: 0, height: 2 },
-                                        elevation: 4,
                                     })}
                                 >
                                     <Text style={{ color: theme.textInverse, fontSize: 10, fontWeight: "800", letterSpacing: 0.8 }}>

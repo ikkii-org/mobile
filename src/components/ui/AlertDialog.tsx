@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { Animated, Modal, Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme, type FlatTheme } from "../../contexts/ThemeContext";
+import { useTheme, type ThemeTokens } from "../../contexts/ThemeContext";
 
 export type AlertType = "success" | "error" | "info";
 
@@ -14,28 +14,28 @@ interface AlertConfig {
     buttonColor: string;
 }
 
-function getAlertConfig(type: AlertType, theme: FlatTheme): AlertConfig {
+function getAlertConfig(type: AlertType, theme: ThemeTokens): AlertConfig {
     const map: Record<AlertType, AlertConfig> = {
         success: {
             border: theme.green,
-            iconBg: theme.isDark ? "#064E3B" : "#D1FAE5",
-            iconColor: theme.isDark ? "#34D399" : "#059669",
+            iconBg: "#D1FAE5",
+            iconColor: "#059669",
             iconName: "checkmark-circle",
             title: "Success",
             buttonColor: theme.green,
         },
         error: {
             border: theme.red,
-            iconBg: theme.isDark ? "#7F1D1D" : "#FEE2E2",
-            iconColor: theme.isDark ? "#FCA5A5" : "#DC2626",
+            iconBg: "#FEE2E2",
+            iconColor: "#DC2626",
             iconName: "close-circle",
             title: "Error",
             buttonColor: theme.accent,
         },
         info: {
             border: theme.blue,
-            iconBg: theme.isDark ? "#1E3A5F" : "#DBEAFE",
-            iconColor: theme.isDark ? "#93C5FD" : "#2563EB",
+            iconBg: "#DBEAFE",
+            iconColor: "#2563EB",
             iconName: "information-circle",
             title: "Info",
             buttonColor: theme.blue,
@@ -135,7 +135,7 @@ export function AlertDialog({ visible, type, message, onDismiss }: AlertDialogPr
                             transform: [{ scale }],
                             opacity,
                             width: 300,
-                            backgroundColor: theme.bgCard,
+                            backgroundColor: theme.bgGlass,
                             borderWidth: 1,
                             borderColor: config.border,
                             borderRadius: 24,

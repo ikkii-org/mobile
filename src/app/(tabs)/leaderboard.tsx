@@ -161,13 +161,8 @@ function LeaderboardCard({ entry, isCurrentUser }: { entry: LeaderboardEntry; is
                 backgroundColor: isCurrentUser ? theme.accentBg : theme.bgCard,
                 borderRadius: 14,
                 borderWidth: 1,
-                borderColor: isCurrentUser ? theme.borderGlow : theme.border,
+                borderColor: isCurrentUser ? theme.borderStrong : theme.border,
                 opacity: pressed ? 0.9 : 1,
-                shadowColor: isCurrentUser ? theme.accentGlow : "transparent",
-                shadowOpacity: isCurrentUser ? 0.4 : 0,
-                shadowRadius: 8,
-                shadowOffset: { width: 0, height: 2 },
-                elevation: isCurrentUser ? 4 : 2,
             })}
         >
             {/* Rank */}
@@ -263,7 +258,7 @@ export default function LeaderboardScreen() {
     if (loading) {
         return (
             <View style={{ flex: 1, backgroundColor: theme.bg, alignItems: "center", justifyContent: "center" }}>
-                <StatusBar style={theme.isDark ? "light" : "dark"} />
+                <StatusBar style="dark" />
                 <ActivityIndicator size="large" color={theme.accent} />
             </View>
         );
@@ -299,14 +294,9 @@ export default function LeaderboardScreen() {
                     <View style={{
                         backgroundColor: theme.bgGlass,
                         borderRadius: 16,
-                        borderWidth: 1.5,
-                        borderColor: theme.borderGlow,
+                        borderWidth: 1,
+                        borderColor: theme.borderStrong,
                         overflow: "hidden",
-                        shadowColor: theme.accentGlow,
-                        shadowOpacity: 0.4,
-                        shadowRadius: 14,
-                        shadowOffset: { width: 0, height: 4 },
-                        elevation: 6,
                     }}>
                         <View style={{ height: 2, backgroundColor: theme.accent }} />
                         <View style={{
@@ -403,7 +393,7 @@ export default function LeaderboardScreen() {
 
     return (
         <View style={{ flex: 1, backgroundColor: theme.bg }}>
-            <StatusBar style={theme.isDark ? "light" : "dark"} />
+            <StatusBar style="dark" />
             <FlatList
                 data={rest}
                 keyExtractor={(item) => item.userId}

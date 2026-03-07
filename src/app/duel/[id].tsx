@@ -124,7 +124,7 @@ export default function DuelDetailScreen() {
     if (loading && !duel) {
         return (
             <View style={{ flex: 1, backgroundColor: theme.bg, alignItems: "center", justifyContent: "center" }}>
-                <StatusBar style={theme.isDark ? "light" : "dark"} />
+                <StatusBar style="dark" />
                 <ActivityIndicator size="large" color={theme.accent} />
             </View>
         );
@@ -133,7 +133,7 @@ export default function DuelDetailScreen() {
     if (!duel) {
         return (
             <View style={{ flex: 1, backgroundColor: theme.bg, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 }}>
-                <StatusBar style={theme.isDark ? "light" : "dark"} />
+                <StatusBar style="dark" />
                 <Ionicons name="alert-circle-outline" size={48} color={theme.textMuted} />
                 <Text style={{ color: theme.textPrimary, fontSize: 18, fontWeight: "800", marginTop: 12, marginBottom: 6 }}>
                     Duel Not Found
@@ -369,7 +369,7 @@ export default function DuelDetailScreen() {
 
     return (
         <View style={{ flex: 1, backgroundColor: theme.bg }}>
-            <StatusBar style={theme.isDark ? "light" : "dark"} />
+            <StatusBar style="dark" />
             <ScrollView
                 style={{ flex: 1 }}
                 contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 64, paddingBottom: 40 }}
@@ -421,10 +421,10 @@ export default function DuelDetailScreen() {
 
                 {/* Players VS Card */}
                 <View style={{
-                    backgroundColor: theme.bgCard,
+                    backgroundColor: theme.bgGlass,
                     borderRadius: 16,
                     borderWidth: 1,
-                    borderColor: theme.border,
+                    borderColor: theme.borderStrong,
                     marginBottom: 12,
                     overflow: "hidden",
                 }}>
@@ -468,11 +468,6 @@ export default function DuelDetailScreen() {
                                     justifyContent: "center",
                                     borderWidth: 1,
                                     borderColor: theme.accent + "60",
-                                    shadowColor: theme.accent,
-                                    shadowOpacity: 0.4,
-                                    shadowRadius: 10,
-                                    shadowOffset: { width: 0, height: 0 },
-                                    elevation: 8,
                                 }}>
                                     <Text style={{ color: theme.accentLight, fontSize: 14, fontWeight: "900", letterSpacing: 1 }}>
                                         VS
@@ -687,7 +682,7 @@ export default function DuelDetailScreen() {
 
                 {duel.status === "SETTLED" && (
                     <View style={{
-                        backgroundColor: theme.bgCard,
+                        backgroundColor: theme.bgGlass,
                         borderRadius: 16,
                         borderWidth: 1,
                         borderColor: theme.amber + "40",

@@ -20,11 +20,6 @@ export function Card({ children, noPadding, accent, style, ...props }: CardProps
                     borderRadius: 20,
                     padding: noPadding ? 0 : 16,
                     overflow: "hidden",
-                    shadowColor: theme.shadow,
-                    shadowOpacity: theme.isDark ? 0.4 : 0.08,
-                    shadowRadius: 12,
-                    shadowOffset: { width: 0, height: 4 },
-                    elevation: 4,
                 },
                 style,
             ]}

@@ -80,7 +80,7 @@ export default function UserProfileScreen() {
     if (loading) {
         return (
             <View style={{ flex: 1, backgroundColor: theme.bg, alignItems: "center", justifyContent: "center" }}>
-                <StatusBar style={theme.isDark ? "light" : "dark"} />
+                <StatusBar style="dark" />
                 <ActivityIndicator size="large" color={theme.accent} />
             </View>
         );
@@ -89,7 +89,7 @@ export default function UserProfileScreen() {
     if (!profile) {
         return (
             <View style={{ flex: 1, backgroundColor: theme.bg, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 }}>
-                <StatusBar style={theme.isDark ? "light" : "dark"} />
+                <StatusBar style="dark" />
                 <Text style={{ color: theme.textPrimary, fontSize: 18, fontWeight: "700", marginBottom: 8 }}>
                     Player Not Found
                 </Text>
@@ -119,7 +119,7 @@ export default function UserProfileScreen() {
 
     return (
         <View style={{ flex: 1, backgroundColor: theme.bg }}>
-            <StatusBar style={theme.isDark ? "light" : "dark"} />
+            <StatusBar style="dark" />
             <ScrollView
                 style={{ flex: 1 }}
                 contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 64, paddingBottom: 40 }}
@@ -143,7 +143,7 @@ export default function UserProfileScreen() {
                     {rank > 0 && (
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 }}>
                             <View style={{
-                                backgroundColor: theme.bgCard,
+                                backgroundColor: theme.bgGlass,
                                 paddingHorizontal: 12,
                                 paddingVertical: 4,
                                 borderRadius: 100,

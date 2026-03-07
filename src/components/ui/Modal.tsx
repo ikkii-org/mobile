@@ -48,11 +48,16 @@ export function Modal({
                 <Pressable
                     style={{
                         width: "100%",
-                        backgroundColor: theme.bgCard,
+                        backgroundColor: theme.bgGlass,
                         borderWidth: 1,
                         borderColor: theme.borderStrong,
                         borderRadius: 24,
                         padding: 24,
+                        shadowColor: theme.shadow,
+                        shadowOpacity: 0.15,
+                        shadowRadius: 20,
+                        shadowOffset: { width: 0, height: 8 },
+                        elevation: 10,
                     }}
                     onPress={(e) => e.stopPropagation()}
                 >

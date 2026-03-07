@@ -1,121 +1,101 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { View, Text } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import { useTheme } from "../../contexts/ThemeContext";
+import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
+import * as Haptics from "expo-haptics";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-function TabIcon({
-    name,
-    color,
-    focused,
-    label,
-}: {
-    name: keyof typeof Ionicons.glyphMap;
-    color: string;
-    focused: boolean;
+const TAB_CONFIG: {
+    icon: keyof typeof Ionicons.glyphMap;
     label: string;
-}) {
+}[] = [
+    { icon: "flash", label: "Arena" },
+    { icon: "add-circle", label: "Duel" },
+    { icon: "wallet", label: "Vault" },
+    { icon: "trophy", label: "Ranks" },
+    { icon: "person", label: "Profile" },
+];
+
+function CustomTabBar({ state, navigation }: BottomTabBarProps) {
     const theme = useTheme();
+    const insets = useSafeAreaInsets();
+
     return (
-        <View style={{ alignItems: "center", justifyContent: "center", paddingTop: 6 }}>
-            <View
-                style={{
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: 48,
-                    height: 30,
-                    borderRadius: 15,
-                    backgroundColor: focused ? theme.accentBg : "transparent",
-                    borderWidth: focused ? 1 : 0,
-                    borderColor: focused ? theme.borderGlow : "transparent",
-                    shadowColor: focused ? theme.accent : "transparent",
-                    shadowOpacity: focused ? 0.6 : 0,
-                    shadowRadius: 8,
-                    shadowOffset: { width: 0, height: 0 },
-                }}
-            >
-                <Ionicons name={name} size={22} color={color} />
-            </View>
-            <Text
-                style={{
-                    fontSize: 9,
-                    fontWeight: "700",
-                    letterSpacing: 0.8,
-                    textTransform: "uppercase",
-                    color,
-                    marginTop: 3,
-                }}
-            >
-                {label}
-            </Text>
+        <View
+            style={{
+                flexDirection: "row",
+                backgroundColor: theme.tabBarBg,
+                borderTopWidth: 1,
+                borderTopColor: theme.tabBarBorder,
+                paddingBottom: insets.bottom,
+            }}
+        >
+            {state.routes.map((route, index) => {
+                const focused = state.index === index;
+                const config = TAB_CONFIG[index];
+                const color = focused ? theme.tabBarActive : theme.tabBarInactive;
+
+                return (
+                    <Pressable
+                        key={route.key}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            if (!focused) {
+                                navigation.navigate(route.name);
+                            }
+                        }}
+                        style={{
+                            flex: 1,
+                            alignItems: "center",
+                            paddingTop: 14,
+                            paddingBottom: 10,
+                        }}
+                    >
+                        {/* Top accent bar — spans full cell width */}
+                        <View
+                            style={{
+                                position: "absolute",
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                height: 3,
+                                backgroundColor: focused ? theme.accent : "transparent",
+                            }}
+                        />
+
+                        <Ionicons name={config.icon} size={28} color={color} />
+
+                        <Text
+                            style={{
+                                fontSize: 11,
+                                fontWeight: focused ? "600" : "400",
+                                color,
+                                marginTop: 4,
+                            }}
+                        >
+                            {config.label}
+                        </Text>
+                    </Pressable>
+                );
+            })}
         </View>
     );
 }
 
 export default function TabLayout() {
-    const theme = useTheme();
     return (
         <Tabs
+            tabBar={(props) => <CustomTabBar {...props} />}
             screenOptions={{
                 headerShown: false,
-                tabBarShowLabel: false,
-                tabBarStyle: {
-                    backgroundColor: theme.tabBarBg,
-                    borderTopColor: theme.tabBarBorder,
-                    borderTopWidth: 1,
-                    height: 76,
-                    paddingBottom: 0,
-                    paddingTop: 0,
-                    paddingHorizontal: 4,
-                    elevation: 0,
-                    shadowColor: theme.accent,
-                    shadowOpacity: 0.15,
-                    shadowRadius: 20,
-                    shadowOffset: { width: 0, height: -4 },
-                },
-                tabBarActiveTintColor: theme.tabBarActive,
-                tabBarInactiveTintColor: theme.tabBarInactive,
             }}
         >
-            <Tabs.Screen
-                name="index"
-                options={{
-                    tabBarIcon: ({ color, focused }) => (
-                        <TabIcon name="flash" color={color} focused={focused} label="Arena" />
-                    ),
-                }}
-            />
-            <Tabs.Screen
-                name="create"
-                options={{
-                    tabBarIcon: ({ color, focused }) => (
-                        <TabIcon name="add-circle" color={color} focused={focused} label="Duel" />
-                    ),
-                }}
-            />
-            <Tabs.Screen
-                name="wallet"
-                options={{
-                    tabBarIcon: ({ color, focused }) => (
-                        <TabIcon name="wallet" color={color} focused={focused} label="Vault" />
-                    ),
-                }}
-            />
-            <Tabs.Screen
-                name="leaderboard"
-                options={{
-                    tabBarIcon: ({ color, focused }) => (
-                        <TabIcon name="trophy" color={color} focused={focused} label="Ranks" />
-                    ),
-                }}
-            />
-            <Tabs.Screen
-                name="profile"
-                options={{
-                    tabBarIcon: ({ color, focused }) => (
-                        <TabIcon name="person" color={color} focused={focused} label="Profile" />
-                    ),
-                }}
-            />
+            <Tabs.Screen name="index" />
+            <Tabs.Screen name="create" />
+            <Tabs.Screen name="wallet" />
+            <Tabs.Screen name="leaderboard" />
+            <Tabs.Screen name="profile" />
         </Tabs>
     );
 }

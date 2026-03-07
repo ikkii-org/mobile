@@ -67,7 +67,7 @@ export default function SignupScreen() {
 
     return (
         <View style={{ flex: 1, backgroundColor: theme.bg }}>
-            <StatusBar style={theme.isDark ? "light" : "dark"} />
+            <StatusBar style="dark" />
             <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
                 style={{ flex: 1 }}
@@ -100,10 +100,10 @@ export default function SignupScreen() {
 
                     {/* Form card */}
                     <View style={{
-                        backgroundColor: theme.bgCard,
+                        backgroundColor: theme.bgGlass,
                         borderRadius: 20,
                         borderWidth: 1,
-                        borderColor: theme.border,
+                        borderColor: theme.borderStrong,
                         padding: 20,
                         marginBottom: 16,
                         overflow: "hidden",

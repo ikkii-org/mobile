@@ -42,25 +42,21 @@ export function Button({
             background: theme.accent,
             borderColor: theme.accentLight,
             textColor: theme.textInverse,
-            shadowColor: theme.accent,
         },
         secondary: {
             background: "transparent",
             borderColor: theme.btnSecondaryBorder,
             textColor: theme.accentLight,
-            shadowColor: "transparent",
         },
         danger: {
             background: theme.btnDangerBg,
             borderColor: theme.btnDangerBorder,
             textColor: theme.btnDangerText,
-            shadowColor: theme.btnDangerBorder,
         },
         ghost: {
             background: "transparent",
             borderColor: "transparent",
             textColor: theme.textMuted,
-            shadowColor: "transparent",
         },
     }[variant];
 
@@ -81,11 +77,6 @@ export function Button({
                 paddingHorizontal: sizeStyles.paddingHorizontal,
                 width: fullWidth ? "100%" : undefined,
                 opacity: disabled || loading ? 0.45 : pressed ? 0.78 : 1,
-                shadowColor: variantStyles.shadowColor,
-                shadowOpacity: pressed ? 0 : 0.45,
-                shadowRadius: 12,
-                shadowOffset: { width: 0, height: 4 },
-                elevation: variant === "primary" ? 6 : 0,
             })}
         >
             {loading ? (

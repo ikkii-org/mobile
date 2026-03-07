@@ -51,7 +51,7 @@ export default function LoginScreen() {
 
     return (
         <View style={{ flex: 1, backgroundColor: theme.bg }}>
-            <StatusBar style={theme.isDark ? "light" : "dark"} />
+            <StatusBar style="dark" />
             <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
                 style={{ flex: 1 }}
@@ -73,11 +73,6 @@ export default function LoginScreen() {
                             borderWidth: 1,
                             borderColor: theme.accent + "60",
                             marginBottom: 20,
-                            shadowColor: theme.accent,
-                            shadowOpacity: 0.5,
-                            shadowRadius: 20,
-                            shadowOffset: { width: 0, height: 0 },
-                            elevation: 12,
                         }}>
                             <Ionicons name="flash" size={34} color={theme.accentLight} />
                         </View>
@@ -98,10 +93,10 @@ export default function LoginScreen() {
 
                     {/* Form card */}
                     <View style={{
-                        backgroundColor: theme.bgCard,
+                        backgroundColor: theme.bgGlass,
                         borderRadius: 20,
                         borderWidth: 1,
-                        borderColor: theme.border,
+                        borderColor: theme.borderStrong,
                         padding: 20,
                         marginBottom: 20,
                         overflow: "hidden",

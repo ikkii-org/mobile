@@ -62,7 +62,7 @@ export default function HomeScreen() {
     if (loading) {
         return (
             <View style={{ flex: 1, backgroundColor: theme.bg, alignItems: "center", justifyContent: "center" }}>
-                <StatusBar style={theme.isDark ? "light" : "dark"} />
+                <StatusBar style="dark" />
                 <ActivityIndicator size="large" color={theme.accent} />
             </View>
         );
@@ -70,7 +70,7 @@ export default function HomeScreen() {
 
     return (
         <View style={{ flex: 1, backgroundColor: theme.bg }}>
-            <StatusBar style={theme.isDark ? "light" : "dark"} />
+            <StatusBar style="dark" />
 
             <ScrollView
                 style={{ flex: 1 }}
@@ -120,14 +120,10 @@ export default function HomeScreen() {
                                 gap: 5,
                                 backgroundColor: theme.accentBg,
                                 borderWidth: 1,
-                                borderColor: theme.borderGlow,
+                                borderColor: theme.borderStrong,
                                 borderRadius: 100,
                                 paddingHorizontal: 12,
                                 paddingVertical: 7,
-                                shadowColor: theme.accentGlow,
-                                shadowOpacity: 0.4,
-                                shadowRadius: 8,
-                                shadowOffset: { width: 0, height: 0 },
                             }}>
                                 <Ionicons name="flash" size={11} color={theme.accentLight} />
                                 <Text style={{ color: theme.accentLight, fontSize: 11, fontWeight: "800" }}>
@@ -156,11 +152,6 @@ export default function HomeScreen() {
                                 paddingVertical: 12,
                                 paddingHorizontal: 10,
                                 alignItems: "center",
-                                shadowColor: item.color,
-                                shadowOpacity: 0.12,
-                                shadowRadius: 6,
-                                shadowOffset: { width: 0, height: 2 },
-                                elevation: 3,
                             }}
                         >
                             <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 4 }}>

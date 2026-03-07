@@ -11,7 +11,7 @@ import React, {
     useState,
 } from "react";
 import { Alert } from "react-native";
-import { getAssociatedTokenAddressSync } from "@solana/spl-token";
+import { getAssociatedTokenAddressSync, NATIVE_MINT } from "@solana/spl-token";
 import { useAuth } from "../contexts/AuthContext";
 import { COMMON_TOKENS } from "../constants";
 
@@ -34,6 +34,7 @@ interface WalletContextState {
     publicKey: PublicKey | null;
     authToken: string | null;
     balanceSol: number | null;
+    balanceWsol: number | null;
     balanceUsdc: number | null;
     loadingBalance: boolean;
     connect: () => Promise<void>;
@@ -48,6 +49,7 @@ const WalletContext = createContext<WalletContextState>({
     publicKey: null,
     authToken: null,
     balanceSol: null,
+    balanceWsol: null,
     balanceUsdc: null,
     loadingBalance: false,
     connect: async () => { },
@@ -63,15 +65,26 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     const [publicKey, setPublicKey] = useState<PublicKey | null>(null);
     const [authToken, setAuthToken] = useState<string | null>(null);
     const [balanceSol, setBalanceSol] = useState<number | null>(null);
+    const [balanceWsol, setBalanceWsol] = useState<number | null>(null);
     const [balanceUsdc, setBalanceUsdc] = useState<number | null>(null);
     const [loadingBalance, setLoadingBalance] = useState(false);
 
     const fetchBalance = useCallback(async (pk: PublicKey) => {
         setLoadingBalance(true);
         try {
-            // Fetch SOL
+            // Fetch native SOL
             const lamports = await CONNECTION.getBalance(pk);
             setBalanceSol(lamports / LAMPORTS_PER_SOL);
+
+            // Fetch wSOL (wrapped SOL sitting in ATA — e.g. unclaimed duel winnings)
+            const wsolAta = getAssociatedTokenAddressSync(NATIVE_MINT, pk, false);
+            try {
+                const wsolBal = await CONNECTION.getTokenAccountBalance(wsolAta);
+                setBalanceWsol(wsolBal.value.uiAmount ?? 0);
+            } catch {
+                // wSOL ATA doesn't exist — no unclaimed winnings
+                setBalanceWsol(0);
+            }
 
             // Fetch USDC
             const usdcMint = new PublicKey(COMMON_TOKENS.find(t => t.symbol === "USDC")!.mint);
@@ -86,6 +99,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         } catch (err) {
             console.error("[Wallet] getBalance error:", err);
             setBalanceSol(null);
+            setBalanceWsol(null);
             setBalanceUsdc(null);
         } finally {
             setLoadingBalance(false);
@@ -105,6 +119,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         } else {
             setPublicKey(null);
             setBalanceSol(null);
+            setBalanceWsol(null);
             setBalanceUsdc(null);
         }
     }, [user?.walletKey, fetchBalance]);
@@ -149,6 +164,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         if (!user?.walletKey) {
             setPublicKey(null);
             setBalanceSol(null);
+            setBalanceWsol(null);
             setBalanceUsdc(null);
         }
     }, [user?.walletKey]);
@@ -164,6 +180,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
                 publicKey,
                 authToken,
                 balanceSol,
+                balanceWsol,
                 balanceUsdc,
                 loadingBalance,
                 connect,

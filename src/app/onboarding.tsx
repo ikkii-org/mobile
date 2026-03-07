@@ -52,7 +52,7 @@ export default function OnboardingScreen() {
 
     return (
         <View style={{ flex: 1, backgroundColor: theme.bg }}>
-            <StatusBar style={theme.isDark ? "light" : "dark"} />
+            <StatusBar style="dark" />
 
             {/* Top branding */}
             <View style={{ alignItems: "center", paddingTop: 80, paddingBottom: 16 }}>
@@ -80,7 +80,7 @@ export default function OnboardingScreen() {
                                 width: 96,
                                 height: 96,
                                 borderRadius: 48,
-                                backgroundColor: theme.bgCard,
+                                backgroundColor: theme.bgGlass,
                                 borderWidth: 1,
                                 borderColor: theme.borderStrong,
                                 alignItems: "center",

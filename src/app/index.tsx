@@ -78,11 +78,6 @@ export default function Index() {
                         borderRadius: 12,
                         paddingHorizontal: 28,
                         paddingVertical: 12,
-                        shadowColor: theme.accentGlow,
-                        shadowOpacity: 0.5,
-                        shadowRadius: 10,
-                        shadowOffset: { width: 0, height: 4 },
-                        elevation: 6,
                     }}
                 >
                     <Text style={{ color: theme.textInverse, fontSize: 14, fontWeight: "800", letterSpacing: 0.5 }}>

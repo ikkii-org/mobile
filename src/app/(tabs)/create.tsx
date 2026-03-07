@@ -212,7 +212,7 @@ export default function CreateDuelScreen() {
 
     return (
         <View style={{ flex: 1, backgroundColor: theme.bg }}>
-            <StatusBar style={theme.isDark ? "light" : "dark"} />
+            <StatusBar style="dark" />
             <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
                 {/* ═══ HEADER ═══ */}
                 <View style={{ paddingHorizontal: 20, paddingTop: 56, paddingBottom: 8 }}>
@@ -245,11 +245,7 @@ export default function CreateDuelScreen() {
                                         justifyContent: "center",
                                         backgroundColor: i <= step ? theme.accent : theme.bgCard,
                                         borderWidth: 1.5,
-                                        borderColor: i <= step ? theme.borderGlow : theme.border,
-                                        shadowColor: i === step ? theme.accentGlow : "transparent",
-                                        shadowOpacity: i === step ? 0.7 : 0,
-                                        shadowRadius: 8,
-                                        shadowOffset: { width: 0, height: 0 },
+                                        borderColor: i <= step ? theme.borderStrong : theme.border,
                                     }}
                                 >
                                     {i < step ? (
@@ -301,14 +297,9 @@ export default function CreateDuelScreen() {
                     <View style={{
                         backgroundColor: theme.bgGlass,
                         borderWidth: 1,
-                        borderColor: theme.borderGlow,
+                        borderColor: theme.borderStrong,
                         borderRadius: 20,
                         overflow: "hidden",
-                        shadowColor: theme.accentGlow,
-                        shadowOpacity: 0.15,
-                        shadowRadius: 16,
-                        shadowOffset: { width: 0, height: 4 },
-                        elevation: 4,
                     }}>
                         {/* Accent bar */}
                         <View style={{ height: 2, backgroundColor: theme.accent }} />
@@ -344,12 +335,8 @@ export default function CreateDuelScreen() {
                                                     padding: 14,
                                                     borderRadius: 14,
                                                     borderWidth: 1.5,
-                                                    borderColor: selectedGameIdx === null ? theme.borderGlow : theme.border,
+                                                    borderColor: selectedGameIdx === null ? theme.borderStrong : theme.border,
                                                     backgroundColor: selectedGameIdx === null ? theme.accentBg : theme.bgCard,
-                                                    shadowColor: selectedGameIdx === null ? theme.accentGlow : "transparent",
-                                                    shadowOpacity: selectedGameIdx === null ? 0.5 : 0,
-                                                    shadowRadius: 10,
-                                                    shadowOffset: { width: 0, height: 0 },
                                                 }}
                                             >
                                                 <View style={{
@@ -396,13 +383,9 @@ export default function CreateDuelScreen() {
                                                             padding: 14,
                                                             borderRadius: 14,
                                                             borderWidth: 1.5,
-                                                            borderColor: isSelected ? theme.borderGlow : theme.border,
+                                                            borderColor: isSelected ? theme.borderStrong : theme.border,
                                                             backgroundColor: isSelected ? theme.accentBg : theme.bgCard,
                                                             opacity: isDisabled ? 0.45 : 1,
-                                                            shadowColor: isSelected ? theme.accentGlow : "transparent",
-                                                            shadowOpacity: isSelected ? 0.5 : 0,
-                                                            shadowRadius: 10,
-                                                            shadowOffset: { width: 0, height: 0 },
                                                         }}
                                                     >
                                                         <View style={{
@@ -582,12 +565,8 @@ export default function CreateDuelScreen() {
                                                         padding: 14,
                                                         borderRadius: 14,
                                                         borderWidth: 1.5,
-                                                        borderColor: isSelected ? theme.borderGlow : theme.border,
+                                                         borderColor: isSelected ? theme.borderStrong : theme.border,
                                                         backgroundColor: isSelected ? theme.accentBg : theme.bgCard,
-                                                        shadowColor: isSelected ? theme.accentGlow : "transparent",
-                                                        shadowOpacity: isSelected ? 0.5 : 0,
-                                                        shadowRadius: 10,
-                                                        shadowOffset: { width: 0, height: 0 },
                                                     }}
                                                 >
                                                     {/* Token icon circle */}
@@ -694,12 +673,8 @@ export default function CreateDuelScreen() {
                                                         paddingVertical: 13,
                                                         borderRadius: 12,
                                                         borderWidth: 1.5,
-                                                        borderColor: isSelected ? theme.borderGlow : theme.border,
+                                                         borderColor: isSelected ? theme.borderStrong : theme.border,
                                                         backgroundColor: isSelected ? theme.accentBg : theme.bgCard,
-                                                        shadowColor: isSelected ? theme.accentGlow : "transparent",
-                                                        shadowOpacity: isSelected ? 0.4 : 0,
-                                                        shadowRadius: 8,
-                                                        shadowOffset: { width: 0, height: 0 },
                                                     }}
                                                 >
                                                     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
