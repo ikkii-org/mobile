@@ -441,7 +441,7 @@ export default function ProfileScreen() {
                                     value: balanceSol !== null ? balanceSol.toFixed(2) : (profile.portfolio.solanaBalance ?? 0).toFixed(2),
                                     color: theme.accentLight,
                                     glow: theme.accentGlow,
-                                    icon: "logo-bitcoin" as keyof typeof Ionicons.glyphMap,
+                                    icon: "wallet-outline" as keyof typeof Ionicons.glyphMap,
                                 },
                             ].map((stat) => (
                                 <View

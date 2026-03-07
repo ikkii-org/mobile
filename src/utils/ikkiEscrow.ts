@@ -255,8 +255,17 @@ export function buildCancelEscrowInstructions(
     });
 
     if (isNativeSol(tokenMint)) {
-        // Append: close the wSOL ATA to unwrap the refunded stake back to native SOL
-        return [cancelIx, buildUnwrapSolInstruction(player1PubKey, player1PubKey)];
+        // The wSOL ATA may not exist at cancel time (it was created transiently during
+        // create_escrow and may have been closed). We must ensure it exists so the
+        // on-chain program can transfer the refunded stake into it.
+        const ensureAtaIx = createAssociatedTokenAccountIdempotentInstruction(
+            player1PubKey,        // payer
+            player1TokenAccount,  // ATA address (wSOL)
+            player1PubKey,        // owner
+            NATIVE_MINT,
+        );
+        // Sequence: ensure ATA exists → cancel (refunds into ATA) → unwrap (closes ATA → native SOL)
+        return [ensureAtaIx, cancelIx, buildUnwrapSolInstruction(player1PubKey, player1PubKey)];
     }
 
     return [cancelIx];

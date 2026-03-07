@@ -58,7 +58,7 @@ async function apiFetch<T>(
         headers,
     });
 
-    if (res.status === 401 && _onUnauthorized) {
+    if (res.status === 401 && requiresAuth && _onUnauthorized) {
         _onUnauthorized();
         throw new Error("Session expired. Please log in again.");
     }

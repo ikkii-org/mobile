@@ -173,6 +173,21 @@ export default function DuelDetailScreen() {
             return;
         }
 
+        // Pre-flight: If this duel requires a game profile, verify the joiner has one BEFORE
+        // sending the on-chain stake transaction. Without this check, the player's SOL gets
+        // locked in the escrow vault with no way to recover if the server rejects the join.
+        if (duel.gameId) {
+            const hasMatchingProfile = linkedProfiles.some((p) => p.gameId === duel.gameId);
+            if (!hasMatchingProfile) {
+                const gameName = duelGameName || "the required game";
+                showToast(
+                    `You need to link your ${gameName} profile before joining this duel. Go to your profile to link it.`,
+                    "error"
+                );
+                return;
+            }
+        }
+
         setActionLoading(true);
         try {
             const tokenMint = new PublicKey(duel.tokenMint);
