@@ -401,25 +401,7 @@ export default function DuelDetailScreen() {
         }
     };
 
-    const handleWithdrawWinner = async () => {
-        if (!wallet.publicKey || !currentUser || !duel) return;
-        setActionLoading(true);
-        try {
-            const amount = duel.stakeAmount * 2;
-            await escrowAPI.withdraw(user!.id, { amount, walletAddress: wallet.publicKey.toBase58() });
-
-            showToast(`Withdrawn ${amount} ${getTokenSymbol(duel.tokenMint)}!`, "success");
-
-            await AsyncStorage.setItem(`@winner_prompt_${duel.id}`, "true");
-            setShowWinnerPrompt(false);
-        } catch (err: any) {
-            showToast(err.message || "Failed to withdraw winnings", "error");
-        } finally {
-            setActionLoading(false);
-        }
-    };
-
-    const handleKeepInVault = async () => {
+    const handleDismissWinnerPrompt = async () => {
         if (!duel) return;
         try {
             await AsyncStorage.setItem(`@winner_prompt_${duel.id}`, "true");
@@ -427,7 +409,6 @@ export default function DuelDetailScreen() {
             console.warn("AsyncStorage write failed", err);
         }
         setShowWinnerPrompt(false);
-        showToast("Winnings securely stored in your Ikkii vault", "info");
     };
 
     return (
@@ -821,7 +802,7 @@ export default function DuelDetailScreen() {
             {/* Winner Prompt Modal */}
             <Modal
                 visible={showWinnerPrompt}
-                onClose={() => { }}
+                onClose={handleDismissWinnerPrompt}
                 title="🎯 YOU WON!"
             >
                 <View style={{ alignItems: "center", marginBottom: 24 }}>
@@ -839,21 +820,20 @@ export default function DuelDetailScreen() {
                         <Ionicons name="trophy" size={32} color={theme.green} />
                     </View>
                     <Text style={{ color: theme.textSecondary, fontSize: 13, textAlign: "center", lineHeight: 20 }}>
-                        Your winnings of <Text style={{ color: theme.green, fontWeight: "900" }}>{duel?.stakeAmount ? duel.stakeAmount * 2 : 0} {tokenSymbol}</Text> have been deposited into your Ikkii vault.
+                        Your winnings of <Text style={{ color: theme.green, fontWeight: "900" }}>{duel?.stakeAmount ? duel.stakeAmount * 2 : 0} {tokenSymbol}</Text> have been deposited directly into your Solana wallet.
                     </Text>
                     <Text style={{ color: theme.textSecondary, fontSize: 13, textAlign: "center", marginTop: 12 }}>
-                        Please withdraw them to your Solana wallet to complete the process.
+                        The smart contract has atomically settled the duel.
                     </Text>
                 </View>
 
                 <View style={{ gap: 10 }}>
                     <Button
-                        title={`Withdraw to Wallet`}
-                        onPress={handleWithdrawWinner}
+                        title={`Awesome!`}
+                        onPress={handleDismissWinnerPrompt}
                         loading={actionLoading}
                         variant="primary"
                         size="lg"
-                        icon={<Ionicons name="wallet-outline" size={16} color={theme.textInverse} />}
                     />
                 </View>
             </Modal>
