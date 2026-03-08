@@ -295,22 +295,31 @@ export default function CreateDuelScreen() {
                         ))}
                     </View>
                     {/* Step labels */}
-                    <View style={{ flexDirection: "row", marginTop: 6 }}>
+                    <View style={{ position: "relative", height: 16, marginTop: 6, width: "100%" }}>
                         {STEPS.map((s, i) => (
-                            <Text
+                            <View
                                 key={s.key}
                                 style={{
-                                    flex: 1,
-                                    textAlign: i === 0 ? "left" : i === STEPS.length - 1 ? "right" : "center",
-                                    fontSize: 8,
-                                    fontWeight: i === step ? "900" : "600",
-                                    color: i <= step ? theme.accent : theme.textMuted,
-                                    letterSpacing: 1,
-                                    textTransform: "uppercase",
+                                    position: "absolute",
+                                    left: i === 0 ? 0 : i === STEPS.length - 1 ? undefined : `${(i / (STEPS.length - 1)) * 100}%`,
+                                    right: i === STEPS.length - 1 ? 0 : undefined,
+                                    transform: i !== 0 && i !== STEPS.length - 1 ? [{ translateX: -50 }] : [],
+                                    width: 60,
+                                    alignItems: i === 0 ? "flex-start" : i === STEPS.length - 1 ? "flex-end" : "center",
                                 }}
                             >
-                                {s.label}
-                            </Text>
+                                <Text
+                                    style={{
+                                        fontSize: 8,
+                                        fontWeight: i === step ? "900" : "600",
+                                        color: i <= step ? theme.accent : theme.textMuted,
+                                        letterSpacing: 1,
+                                        textTransform: "uppercase",
+                                    }}
+                                >
+                                    {s.label}
+                                </Text>
+                            </View>
                         ))}
                     </View>
                 </View>
@@ -566,7 +575,7 @@ export default function CreateDuelScreen() {
                                         }}>
                                             <Ionicons name="trophy" size={13} color={theme.green} />
                                             <Text style={{ color: theme.green, fontSize: 12, fontWeight: "900", letterSpacing: 0.3 }}>
-                                                Win {potentialWin} {tokenSymbolDisplay}
+                                                Win {potentialWin} SOL/USDC
                                             </Text>
                                         </View>
                                     )}
