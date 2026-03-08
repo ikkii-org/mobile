@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Pressable, RefreshControl, ScrollView, Text, View, ActivityIndicator } from "react-native";
+import * as Clipboard from "expo-clipboard";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import { Connection, PublicKey, Transaction, clusterApiUrl } from "@solana/web3.js";
@@ -111,6 +112,11 @@ function TransactionRow({ tx }: { tx: TxType }) {
     const style = getTxIcon(tx.type, theme);
     const isPositive = tx.amount > 0;
 
+    const handleCopy = async () => {
+        if (!tx.txSignature) return;
+        await Clipboard.setStringAsync(tx.txSignature);
+    };
+
     return (
         <Card noFill noPadding style={{
             borderRadius: 10,
@@ -155,15 +161,27 @@ function TransactionRow({ tx }: { tx: TxType }) {
                     <Text style={{ color: theme.textMuted, fontSize: 10, marginTop: 1, fontFamily: "monospace" }}>
                         {new Date(tx.date).toLocaleDateString()}
                     </Text>
+                    {tx.txSignature && (
+                        <Text style={{ color: theme.textMuted, fontSize: 9, fontFamily: "monospace", marginTop: 2 }} numberOfLines={1}>
+                            {tx.txSignature.slice(0, 20)}…
+                        </Text>
+                    )}
                 </View>
-                <Text style={{
-                    fontSize: 13,
-                    fontWeight: "900",
-                    color: isPositive ? theme.green : theme.red,
-                    letterSpacing: -0.3,
-                }}>
-                    {isPositive ? "+" : ""}{tx.amount.toLocaleString()} USDC
-                </Text>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    <Text style={{
+                        fontSize: 13,
+                        fontWeight: "900",
+                        color: isPositive ? theme.green : theme.red,
+                        letterSpacing: -0.3,
+                    }}>
+                        {isPositive ? "+" : ""}{tx.amount.toLocaleString()} USDC
+                    </Text>
+                    {tx.txSignature && (
+                        <Pressable onPress={handleCopy} hitSlop={8}>
+                            <Ionicons name="copy-outline" size={14} color={theme.textMuted} />
+                        </Pressable>
+                    )}
+                </View>
             </View>
         </Card>
     );
@@ -198,6 +216,7 @@ export default function WalletScreen() {
                 amount: parseFloat(tx.amount),
                 date: tx.createdAt,
                 status: tx.transactionStatus,
+                txSignature: tx.txSignature ?? undefined,
             })));
         } catch (err: any) {
             console.error("Failed to fetch wallet:", err);

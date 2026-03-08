@@ -107,6 +107,7 @@ export interface Transaction {
     amount: number;
     date: string;
     status: TransactionStatus;
+    txSignature?: string;
 }
 
 // ─── Leaderboard ─────────────────────────────────────────────────────────────

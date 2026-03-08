@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Pressable, ScrollView, Text, View, ActivityIndicator } from "react-native";
+import * as Clipboard from "expo-clipboard";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -102,7 +103,7 @@ export default function DuelDetailScreen() {
 
         gamesAPI.getAll()
             .then((res) => setGames(res.games))
-            .catch((err) => console.warn("Games API not available on production yet:", err));
+            .catch(() => { }); // Not yet available on all environments
     }, []);
 
     // Fetch player data for avatars (pfp)
@@ -659,9 +660,16 @@ export default function DuelDetailScreen() {
                             borderTopColor: theme.border,
                         }}>
                             <Text style={{ color: theme.textMuted, fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase" }}>TX SIG</Text>
-                            <Text style={{ color: theme.textSecondary, fontSize: 10, fontFamily: "monospace" }}>
-                                {duel.txSignature.slice(0, 16)}…
-                            </Text>
+                            <Pressable
+                                onPress={() => Clipboard.setStringAsync(duel.txSignature!)}
+                                hitSlop={8}
+                                style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
+                            >
+                                <Text style={{ color: theme.textSecondary, fontSize: 10, fontFamily: "monospace" }}>
+                                    {duel.txSignature.slice(0, 16)}…
+                                </Text>
+                                <Ionicons name="copy-outline" size={12} color={theme.textMuted} />
+                            </Pressable>
                         </View>
                     )}
                 </Card>
