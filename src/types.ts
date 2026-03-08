@@ -174,10 +174,12 @@ export interface CancelDuelRequest {
 
 export interface DepositRequest {
     amount: number;
+    txSignature?: string;  // on-chain tx signature — server verifies before crediting
 }
 
 export interface WithdrawRequest {
     amount: number;
+    walletAddress: string; // user's Solana public key — server sends tokens here
 }
 
 export interface CreateWalletRequest {

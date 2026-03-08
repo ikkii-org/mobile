@@ -4,6 +4,13 @@ import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import { Connection, PublicKey, Transaction, clusterApiUrl } from "@solana/web3.js";
 import { transact, Web3MobileWallet } from "@solana-mobile/mobile-wallet-adapter-protocol-web3js";
+import {
+    getAssociatedTokenAddressSync,
+    createAssociatedTokenAccountIdempotentInstruction,
+    createTransferCheckedInstruction,
+    getMint,
+    TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Modal } from "../../components/ui/Modal";
@@ -15,6 +22,7 @@ import { useWallet } from "../../components/WalletProvider";
 import { useTheme, ThemeTokens } from "../../contexts/ThemeContext";
 import { escrowAPI } from "../../services/api";
 import { buildUnwrapSolInstruction } from "../../utils/ikkiEscrow";
+import { TREASURY_PUBKEY, TOKEN_MINT } from "../../constants";
 import type { Wallet, Transaction as TxType } from "../../types";
 
 const CONNECTION = new Connection(clusterApiUrl("devnet"), "confirmed");
@@ -203,13 +211,64 @@ export default function WalletScreen() {
     };
 
     const handleDeposit = async () => {
-        if (!user) return;
+        if (!user || !publicKey) {
+            showToast(publicKey ? "User not found" : "Wallet not connected", "error");
+            return;
+        }
         const parsed = parseFloat(amount);
         if (isNaN(parsed) || parsed <= 0) { showToast("Invalid amount", "error"); return; }
         setActionLoading(true);
         try {
-            const res = await escrowAPI.deposit(user.id, { amount: parsed });
+            const userPubkey = publicKey;
+            const mintPubkey = new PublicKey(TOKEN_MINT);
+            const treasuryPk = new PublicKey(TREASURY_PUBKEY);
+
+            // Fetch token decimals
+            const mintInfo = await getMint(CONNECTION, mintPubkey);
+            const decimals = mintInfo.decimals;
+            const atomicAmount = BigInt(Math.round(parsed * 10 ** decimals));
+
+            // Derive ATAs
+            const userAta = getAssociatedTokenAddressSync(mintPubkey, userPubkey, false);
+            const treasuryAta = getAssociatedTokenAddressSync(mintPubkey, treasuryPk, false);
+
+            // Build transfer instruction (user ATA → treasury ATA)
+            const transferIx = createTransferCheckedInstruction(
+                userAta,
+                mintPubkey,
+                treasuryAta,
+                userPubkey,
+                atomicAmount,
+                decimals,
+                [],
+                TOKEN_PROGRAM_ID,
+            );
+
+            // Ensure the treasury ATA exists (idempotent)
+            const ensureTreasuryAtaIx = createAssociatedTokenAccountIdempotentInstruction(
+                userPubkey, treasuryAta, treasuryPk, mintPubkey,
+            );
+
+            const latestBlockhash = await CONNECTION.getLatestBlockhash();
+            const tx = new Transaction({ feePayer: userPubkey, ...latestBlockhash })
+                .add(ensureTreasuryAtaIx)
+                .add(transferIx);
+
+            let txSignature = "";
+            await transact(async (w: Web3MobileWallet) => {
+                await w.authorize({
+                    cluster: "devnet",
+                    identity: { name: "Ikkii", uri: "https://ikkii.app", icon: "favicon.ico" },
+                });
+                const [sig] = await w.signAndSendTransactions({ transactions: [tx] });
+                txSignature = sig;
+            });
+
+            // Confirm on-chain then credit escrow DB via server
+            await CONNECTION.confirmTransaction({ signature: txSignature, ...latestBlockhash }, "confirmed");
+            const res = await escrowAPI.deposit(user.id, { amount: parsed, txSignature });
             setWallet(res.wallet);
+            await refreshBalance();
             showToast(`Deposited ${amount} USDC`, "success");
             setShowDeposit(false);
             setAmount("");
@@ -221,14 +280,19 @@ export default function WalletScreen() {
     };
 
     const handleWithdraw = async () => {
-        if (!user) return;
+        if (!user || !publicKey) {
+            showToast(publicKey ? "User not found" : "Wallet not connected", "error");
+            return;
+        }
         const parsed = parseFloat(amount);
         if (isNaN(parsed) || parsed <= 0) { showToast("Invalid amount", "error"); return; }
         if (parsed > available) { showToast("Insufficient balance", "error"); return; }
         setActionLoading(true);
         try {
-            const res = await escrowAPI.withdraw(user.id, { amount: parsed });
+            // Server handles the on-chain SPL transfer (treasury → user ATA) signed by authority
+            const res = await escrowAPI.withdraw(user.id, { amount: parsed, walletAddress: publicKey.toBase58() });
             setWallet(res.wallet);
+            await refreshBalance();
             showToast(`Withdrawn ${amount} USDC`, "success");
             setShowWithdraw(false);
             setAmount("");

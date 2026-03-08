@@ -4,6 +4,22 @@ import type { DuelStatus } from "./types";
 
 export const API_BASE_URL = "http://100.52.202.154:3000/api/v1";
 
+// ─── Solana / Escrow ─────────────────────────────────────────────────────────
+
+/**
+ * Platform treasury public key — the wallet that holds deposited USDC.
+ * Must match TREASURY_PUBKEY in the server's .env.
+ */
+export const TREASURY_PUBKEY = process.env.EXPO_PUBLIC_TREASURY_PUBKEY ?? "";
+
+/**
+ * SPL token mint for the platform (devnet USDC by default).
+ * Must match TOKEN_MINT in the server's .env.
+ */
+export const TOKEN_MINT = process.env.EXPO_PUBLIC_TOKEN_MINT ?? "";
+
+
+
 // ─── Theme Colors ────────────────────────────────────────────────────────────
 
 export const COLORS = {
