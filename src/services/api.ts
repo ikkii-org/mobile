@@ -195,6 +195,12 @@ export const escrowAPI = {
             method: "POST",
             body: JSON.stringify(data),
         }),
+
+    recordTransaction: (userId: string, data: { type: "STAKE" | "REWARD" | "WITHDRAW" | "CLAIM" | "DEPOSIT"; amount: number; duelId?: string }) =>
+        apiFetch<{ success: boolean }>(`/escrow/wallets/${userId}/record-tx`, {
+            method: "POST",
+            body: JSON.stringify(data),
+        }),
 };
 
 // ─── Leaderboard ─────────────────────────────────────────────────────────────

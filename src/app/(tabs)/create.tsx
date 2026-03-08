@@ -20,7 +20,7 @@ import { useToast } from "../../contexts/ToastContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { useWallet } from "../../components/WalletProvider";
 import { useTheme } from "../../contexts/ThemeContext";
-import { duelsAPI, gameProfileAPI } from "../../services/api";
+import { duelsAPI, gameProfileAPI, escrowAPI } from "../../services/api";
 import { COMMON_TOKENS, EXPIRATION_PRESETS, SUPPORTED_GAMES } from "../../constants";
 import type { GameProfile } from "../../types";
 import { GAME_ICONS } from "../../assets/games";
@@ -168,6 +168,8 @@ export default function CreateDuelScreen() {
             if (confirmation.value.err) {
                 throw new Error(`Transaction failed on-chain: ${JSON.stringify(confirmation.value.err)}`);
             }
+            // Record the stake on the vault
+            escrowAPI.recordTransaction(user.id, { type: "STAKE", amount: stakeAmt, duelId }).catch(() => { });
 
             const { duel } = await duelsAPI.create({
                 username: user.username,

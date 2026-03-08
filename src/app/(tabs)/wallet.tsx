@@ -240,6 +240,8 @@ export default function WalletScreen() {
             });
 
             await CONNECTION.confirmTransaction({ signature: txSignature, ...latestBlockhash }, "confirmed");
+            // Record the claim on the vault page
+            if (user) escrowAPI.recordTransaction(user.id, { type: "CLAIM", amount: balanceWsol ?? 0 }).catch(() => { });
             showToast("SOL claimed to your wallet!", "success");
             await refreshBalance();
         } catch (err: any) {

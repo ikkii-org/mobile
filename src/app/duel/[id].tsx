@@ -20,6 +20,8 @@ import { transact, Web3MobileWallet } from "@solana-mobile/mobile-wallet-adapter
 import { Connection, PublicKey, Transaction, clusterApiUrl } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { buildJoinEscrowInstructions, buildCancelEscrowInstructions, isNativeSol } from "../../utils/ikkiEscrow";
+import { GAME_ICONS } from "../../assets/games";
+import { Image } from "react-native";
 
 const CONNECTION = new Connection(clusterApiUrl("devnet"), "confirmed");
 
@@ -289,6 +291,8 @@ export default function DuelDetailScreen() {
             await CONNECTION.confirmTransaction({ signature: txSignature, ...latestBlockhash }, "confirmed");
             const res = await duelsAPI.join(duel.id, { username: currentUser, txSignature });
             setDuel(res.duel);
+            // Record the stake transaction on the vault
+            if (user) escrowAPI.recordTransaction(user.id, { type: "STAKE", amount: duel.stakeAmount, duelId: duel.id }).catch(() => { });
             showToast("Joined duel! Get ready to compete.", "success");
         } catch (err: any) {
             console.error("Join error:", err);
@@ -327,6 +331,8 @@ export default function DuelDetailScreen() {
 
             await CONNECTION.confirmTransaction({ signature: txSignature, ...latestBlockhash }, "confirmed");
             await duelsAPI.cancel(duel.id, { username: currentUser, txSignature });
+            // Record the refund transaction on the vault
+            if (user) escrowAPI.recordTransaction(user.id, { type: "STAKE", amount: -(duel.stakeAmount), duelId: duel.id }).catch(() => { });
             showToast("Duel cancelled", "info");
             router.back();
         } catch (err: any) {
@@ -399,6 +405,8 @@ export default function DuelDetailScreen() {
             });
 
             await CONNECTION.confirmTransaction({ signature: txSignature, ...latestBlockhash }, "confirmed");
+            // Record the SOL claim on the vault
+            if (user) escrowAPI.recordTransaction(user.id, { type: "CLAIM", amount: 0, duelId: duel.id }).catch(() => { });
             setHasClaimedSol(true);
             await AsyncStorage.setItem(`@claimed_sol_${duel.id}`, "true");
             showToast("SOL claimed to your wallet!", "success");
@@ -442,34 +450,9 @@ export default function DuelDetailScreen() {
                 {/* Status bar + ID */}
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
                     <Badge status={duel.status} />
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                        {/* Game badge */}
-                        {(duelGameInfo || duel.gameId) && (
-                            <View style={{
-                                flexDirection: "row",
-                                alignItems: "center",
-                                gap: 4,
-                                backgroundColor: theme.accentBg,
-                                borderRadius: 8,
-                                paddingHorizontal: 8,
-                                paddingVertical: 4,
-                                borderWidth: 1,
-                                borderColor: theme.borderGlow,
-                            }}>
-                                <Ionicons
-                                    name={(duelGameInfo?.ionicon ?? "game-controller-outline") as keyof typeof Ionicons.glyphMap}
-                                    size={11}
-                                    color={theme.accentLight}
-                                />
-                                <Text style={{ color: theme.accentLight, fontSize: 10, fontWeight: "700" }}>
-                                    {duelGameInfo?.name ?? "Game Duel"}
-                                </Text>
-                            </View>
-                        )}
-                        <Text style={{ color: theme.textMuted, fontSize: 11, fontFamily: "monospace" }}>
-                            #{duel.id.slice(0, 8)}
-                        </Text>
-                    </View>
+                    <Text style={{ color: theme.textMuted, fontSize: 11, fontFamily: "monospace" }}>
+                        #{duel.id.slice(0, 8)}
+                    </Text>
                 </View>
 
                 {/* Players VS Card */}
@@ -480,6 +463,28 @@ export default function DuelDetailScreen() {
                     marginBottom: 12,
                 }}>
                     <View style={{ padding: 20 }}>
+                        {/* Game badge — absolute top-right */}
+                        {(duelGameInfo || duel.gameId) && (
+                            <View style={{ position: "absolute", top: -14, right: 16, flexDirection: "row", alignItems: "center", gap: 5 }}>
+                                {duelGameInfo?.name && GAME_ICONS[duelGameInfo.name] ? (
+                                    <Image
+                                        source={GAME_ICONS[duelGameInfo.name]}
+                                        style={{ width: 18, height: 18, borderRadius: 4 }}
+                                        resizeMode="contain"
+                                    />
+                                ) : (
+                                    <Ionicons
+                                        name={(duelGameInfo?.ionicon ?? "game-controller-outline") as keyof typeof Ionicons.glyphMap}
+                                        size={13}
+                                        color={theme.accentLight}
+                                    />
+                                )}
+                                <Text style={{ color: theme.accentLight, fontSize: 10, fontWeight: "700" }}>
+                                    {duelGameInfo?.name ?? "Game Duel"}
+                                </Text>
+                            </View>
+                        )}
+
                         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                             {/* Player 1 */}
                             <Pressable onPress={() => router.push(`/user/${duel.player1Username}`)} style={{ flex: 1, alignItems: "center" }}>
@@ -490,21 +495,6 @@ export default function DuelDetailScreen() {
                                 <Text style={{ color: theme.textMuted, fontSize: 10, marginTop: 2, letterSpacing: 1, textTransform: "uppercase" }}>
                                     Creator
                                 </Text>
-                                {duel.winnerUsername === duel.player1Username && (
-                                    <View style={{
-                                        marginTop: 6,
-                                        backgroundColor: theme.amber + "20",
-                                        borderRadius: 20,
-                                        paddingHorizontal: 10,
-                                        paddingVertical: 3,
-                                        borderWidth: 1,
-                                        borderColor: theme.amber + "50",
-                                    }}>
-                                        <Text style={{ color: theme.amber, fontSize: 10, fontWeight: "800", letterSpacing: 1 }}>
-                                            WINNER
-                                        </Text>
-                                    </View>
-                                )}
                             </Pressable>
 
                             {/* VS */}
@@ -547,21 +537,6 @@ export default function DuelDetailScreen() {
                                         <Text style={{ color: theme.textMuted, fontSize: 10, marginTop: 2, letterSpacing: 1, textTransform: "uppercase" }}>
                                             Challenger
                                         </Text>
-                                        {duel.winnerUsername === duel.player2Username && (
-                                            <View style={{
-                                                marginTop: 6,
-                                                backgroundColor: theme.amber + "20",
-                                                borderRadius: 20,
-                                                paddingHorizontal: 10,
-                                                paddingVertical: 3,
-                                                borderWidth: 1,
-                                                borderColor: theme.amber + "50",
-                                            }}>
-                                                <Text style={{ color: theme.amber, fontSize: 10, fontWeight: "800", letterSpacing: 1 }}>
-                                                    WINNER
-                                                </Text>
-                                            </View>
-                                        )}
                                     </Pressable>
                                 ) : (
                                     <>
@@ -642,11 +617,19 @@ export default function DuelDetailScreen() {
                         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
                             <Text style={{ color: theme.textMuted, fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase" }}>GAME</Text>
                             <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-                                <Ionicons
-                                    name={(duelGameInfo?.ionicon ?? "game-controller-outline") as keyof typeof Ionicons.glyphMap}
-                                    size={12}
-                                    color={theme.accentLight}
-                                />
+                                {duelGameInfo?.name && GAME_ICONS[duelGameInfo.name] ? (
+                                    <Image
+                                        source={GAME_ICONS[duelGameInfo.name]}
+                                        style={{ width: 16, height: 16, borderRadius: 4 }}
+                                        resizeMode="contain"
+                                    />
+                                ) : (
+                                    <Ionicons
+                                        name={(duelGameInfo?.ionicon ?? "game-controller-outline") as keyof typeof Ionicons.glyphMap}
+                                        size={12}
+                                        color={theme.accentLight}
+                                    />
+                                )}
                                 <Text style={{ color: theme.accentLight, fontSize: 11, fontWeight: "700" }}>
                                     {duelGameInfo?.name ?? "Game Duel"}
                                 </Text>
