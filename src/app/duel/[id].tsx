@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Pressable, ScrollView, Text, View, ActivityIndicator } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -69,6 +70,9 @@ export default function DuelDetailScreen() {
     const [player1Data, setPlayer1Data] = useState<User | null>(null);
     const [player2Data, setPlayer2Data] = useState<User | null>(null);
 
+    // Winner Prompt State
+    const [showWinnerPrompt, setShowWinnerPrompt] = useState(false);
+
     const fetchDuel = useCallback(async () => {
         try {
             const res = await duelsAPI.getById(id);
@@ -121,6 +125,26 @@ export default function DuelDetailScreen() {
         const interval = setInterval(update, 1000);
         return () => clearInterval(interval);
     }, [duel]);
+
+    // Winner Prompt Auto-trigger
+    useEffect(() => {
+        if (!duel || duel.status !== "SETTLED" || !currentUser || duel.winnerUsername !== currentUser) {
+            return;
+        }
+
+        const checkPromptSeen = async () => {
+            try {
+                const storageKey = `@winner_prompt_${duel.id}`;
+                const hasSeen = await AsyncStorage.getItem(storageKey);
+                if (!hasSeen) {
+                    setShowWinnerPrompt(true);
+                }
+            } catch (err) {
+                console.warn("AsyncStorage read failed", err);
+            }
+        };
+        checkPromptSeen();
+    }, [duel, currentUser]);
 
     if (loading && !duel) {
         return (
@@ -366,6 +390,35 @@ export default function DuelDetailScreen() {
         } finally {
             setActionLoading(false);
         }
+    };
+
+    const handleWithdrawWinner = async () => {
+        if (!wallet.publicKey || !currentUser || !duel) return;
+        setActionLoading(true);
+        try {
+            const amount = duel.stakeAmount * 2;
+            await escrowAPI.withdraw(user!.id, { amount, walletAddress: wallet.publicKey.toBase58() });
+
+            showToast(`Withdrawn ${amount} ${getTokenSymbol(duel.tokenMint)}!`, "success");
+
+            await AsyncStorage.setItem(`@winner_prompt_${duel.id}`, "true");
+            setShowWinnerPrompt(false);
+        } catch (err: any) {
+            showToast(err.message || "Failed to withdraw winnings", "error");
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleKeepInVault = async () => {
+        if (!duel) return;
+        try {
+            await AsyncStorage.setItem(`@winner_prompt_${duel.id}`, "true");
+        } catch (err) {
+            console.warn("AsyncStorage write failed", err);
+        }
+        setShowWinnerPrompt(false);
+        showToast("Winnings securely stored in your Ikkii vault", "info");
     };
 
     return (
@@ -752,6 +805,54 @@ export default function DuelDetailScreen() {
                         loading={actionLoading}
                         variant="secondary"
                         size="lg"
+                    />
+                </View>
+            </Modal>
+
+            {/* Winner Prompt Modal */}
+            <Modal
+                visible={showWinnerPrompt}
+                onClose={() => { }}
+                title="🎯 YOU WON!"
+            >
+                <View style={{ alignItems: "center", marginBottom: 24 }}>
+                    <View style={{
+                        width: 64,
+                        height: 64,
+                        borderRadius: 32,
+                        backgroundColor: theme.green + "20",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginBottom: 16,
+                        borderWidth: 1,
+                        borderColor: theme.green + "40",
+                    }}>
+                        <Ionicons name="trophy" size={32} color={theme.green} />
+                    </View>
+                    <Text style={{ color: theme.textSecondary, fontSize: 13, textAlign: "center", lineHeight: 20 }}>
+                        Your winnings of <Text style={{ color: theme.green, fontWeight: "900" }}>{duel?.stakeAmount ? duel.stakeAmount * 2 : 0} {tokenSymbol}</Text> have been deposited into your Ikkii vault.
+                    </Text>
+                    <Text style={{ color: theme.textSecondary, fontSize: 13, textAlign: "center", marginTop: 12 }}>
+                        Would you like to withdraw them to your Solana wallet now?
+                    </Text>
+                </View>
+
+                <View style={{ gap: 10 }}>
+                    <Button
+                        title={`Withdraw to Wallet`}
+                        onPress={handleWithdrawWinner}
+                        loading={actionLoading}
+                        variant="primary"
+                        size="lg"
+                        icon={<Ionicons name="wallet-outline" size={16} color={theme.textInverse} />}
+                    />
+                    <Button
+                        title="Keep in Ikkii Vault"
+                        onPress={handleKeepInVault}
+                        variant="secondary"
+                        size="lg"
+                        disabled={actionLoading}
+                        icon={<Ionicons name="shield-checkmark" size={16} color={theme.accentLight} />}
                     />
                 </View>
             </Modal>

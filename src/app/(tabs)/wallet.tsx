@@ -40,6 +40,7 @@ function getTxIcon(type: string, theme: ThemeTokens): { icon: keyof typeof Ionic
         STAKE: { icon: "lock-closed", color: theme.amber, glow: theme.amber + "30" },
         REWARD: { icon: "trophy", color: theme.green, glow: theme.greenGlow },
         WITHDRAW: { icon: "arrow-up", color: theme.red, glow: theme.redGlow },
+        DEPOSIT: { icon: "arrow-down", color: theme.green, glow: theme.greenGlow },
         CLAIM: { icon: "gift", color: theme.accentLight, glow: theme.accentGlow },
     };
     return map[type] ?? { icon: "help-circle", color: theme.grey, glow: "transparent" };
@@ -193,7 +194,15 @@ export default function WalletScreen() {
         try {
             const res = await escrowAPI.getWallet(user.id);
             setWallet(res.wallet);
-            setTransactions([]);
+
+            const txRes = await escrowAPI.getTransactions(user.id);
+            setTransactions(txRes.transactions.map((tx: any) => ({
+                id: tx.id,
+                type: tx.transactionType,
+                amount: parseFloat(tx.amount),
+                date: tx.createdAt,
+                status: tx.transactionStatus,
+            })));
         } catch (err: any) {
             console.error("Failed to fetch wallet:", err);
         } finally {

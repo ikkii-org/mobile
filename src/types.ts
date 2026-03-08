@@ -98,7 +98,7 @@ export interface Wallet {
     lockedBalance: string;
 }
 
-export type TransactionType = "STAKE" | "REWARD" | "WITHDRAW" | "CLAIM";
+export type TransactionType = "STAKE" | "REWARD" | "WITHDRAW" | "CLAIM" | "DEPOSIT";
 export type TransactionStatus = "PENDING" | "SUCCESS" | "FAILED";
 
 export interface Transaction {

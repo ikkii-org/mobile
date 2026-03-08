@@ -162,6 +162,9 @@ export const escrowAPI = {
     getWallet: (userId: string) =>
         apiFetch<{ wallet: Wallet }>(`/escrow/wallets/${userId}`),
 
+    getTransactions: (userId: string) =>
+        apiFetch<{ transactions: any[] }>(`/escrow/wallets/${userId}/transactions`),
+
     deposit: (userId: string, data: DepositRequest) =>
         apiFetch<{ wallet: Wallet }>(`/escrow/wallets/${userId}/deposit`, {
             method: "POST",

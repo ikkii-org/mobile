@@ -797,7 +797,7 @@ export default function CreateDuelScreen() {
                                 />
                             </View>
                         )}
-                        <View style={{ flex: step > 0 ? 1 : undefined, width: step === 0 ? "100%" : undefined }}>
+                        <View style={{ flex: 1 }}>
                             {step < STEPS.length - 1 ? (
                                 <Button
                                     title="Continue"
