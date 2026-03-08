@@ -17,26 +17,19 @@ export function SplashAnimation({ children }: SplashAnimationProps) {
     useEffect(() => {
         // Run Stomp Sequence!
         Animated.sequence([
-            // 1. Stomp down (Scale 5 -> 0.8 rapidly)
+            // 1. Scale in linearly — equal speed start to finish
             Animated.timing(scaleAnim, {
-                toValue: 0.8,
-                duration: 150,
-                easing: Easing.in(Easing.exp),
-                useNativeDriver: true,
-            }),
-            // 2. Bounce back to normal (Scale 0.8 -> 1 with spring physics)
-            Animated.spring(scaleAnim, {
                 toValue: 1,
-                friction: 4,
-                tension: 40,
+                duration: 500,
+                easing: Easing.linear,
                 useNativeDriver: true,
             }),
-            // 3. Pause for exactly 1 second
-            Animated.delay(1000),
-            // 4. Fade entire overlay out
+            // 2. Pause
+            Animated.delay(550),
+            // 3. Fade out
             Animated.timing(opacityAnim, {
                 toValue: 0,
-                duration: 300,
+                duration: 200,
                 easing: Easing.out(Easing.quad),
                 useNativeDriver: true,
             }),

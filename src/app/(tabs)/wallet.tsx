@@ -4,17 +4,9 @@ import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import { Connection, PublicKey, Transaction, clusterApiUrl } from "@solana/web3.js";
 import { transact, Web3MobileWallet } from "@solana-mobile/mobile-wallet-adapter-protocol-web3js";
-import {
-    getAssociatedTokenAddressSync,
-    createAssociatedTokenAccountIdempotentInstruction,
-    createTransferCheckedInstruction,
-    getMint,
-    TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
+
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
-import { Modal } from "../../components/ui/Modal";
-import { Input } from "../../components/ui/Input";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { useToast } from "../../contexts/ToastContext";
 import { useAuth } from "../../contexts/AuthContext";
@@ -22,7 +14,6 @@ import { useWallet } from "../../components/WalletProvider";
 import { useTheme, ThemeTokens } from "../../contexts/ThemeContext";
 import { escrowAPI } from "../../services/api";
 import { buildUnwrapSolInstruction } from "../../utils/ikkiEscrow";
-import { TREASURY_PUBKEY, TOKEN_MINT } from "../../constants";
 import type { Wallet, Transaction as TxType } from "../../types";
 
 const CONNECTION = new Connection(clusterApiUrl("devnet"), "confirmed");
@@ -47,11 +38,11 @@ function getTxIcon(type: string, theme: ThemeTokens): { icon: keyof typeof Ionic
 }
 
 // ─── Ring Chart Component (SVG-free, RN Views) ───
-function RingChart({ available, locked, size }: { available: number; locked: number; size: number }) {
+function RingChart({ usdc, sol, size }: { usdc: number; sol: number; size: number }) {
     const theme = useTheme();
-    const total = available + locked;
-    const availPct = total > 0 ? available / total : 0.5;
-    const lockedPct = total > 0 ? locked / total : 0.5;
+    // Static 50/50 split for aesthetic since USDC and SOL have different values
+    const usdcPct = 0.5;
+    const solPct = 0.5;
     const ringWidth = 8;
 
     return (
@@ -65,7 +56,7 @@ function RingChart({ available, locked, size }: { available: number; locked: num
                 borderWidth: ringWidth,
                 borderColor: theme.bgCard,
             }} />
-            {/* Available segment (top-right arc visual) */}
+            {/* USDC segment */}
             <View style={{
                 position: "absolute",
                 width: size,
@@ -73,13 +64,13 @@ function RingChart({ available, locked, size }: { available: number; locked: num
                 borderRadius: size / 2,
                 borderWidth: ringWidth,
                 borderColor: "transparent",
-                borderTopColor: theme.green,
-                borderRightColor: availPct > 0.25 ? theme.green : "transparent",
-                borderBottomColor: availPct > 0.5 ? theme.green : "transparent",
-                borderLeftColor: availPct > 0.75 ? theme.green : "transparent",
+                borderTopColor: theme.blue,
+                borderRightColor: usdcPct > 0.25 ? theme.blue : "transparent",
+                borderBottomColor: usdcPct > 0.5 ? theme.blue : "transparent",
+                borderLeftColor: usdcPct > 0.75 ? theme.blue : "transparent",
                 transform: [{ rotate: "-45deg" }],
             }} />
-            {/* Locked segment (complementary) */}
+            {/* SOL segment */}
             <View style={{
                 position: "absolute",
                 width: size,
@@ -87,19 +78,28 @@ function RingChart({ available, locked, size }: { available: number; locked: num
                 borderRadius: size / 2,
                 borderWidth: ringWidth,
                 borderColor: "transparent",
-                borderTopColor: theme.amber,
-                borderRightColor: lockedPct > 0.25 ? theme.amber : "transparent",
-                borderBottomColor: lockedPct > 0.5 ? theme.amber : "transparent",
-                borderLeftColor: lockedPct > 0.75 ? theme.amber : "transparent",
-                transform: [{ rotate: `${-45 + availPct * 360}deg` }],
+                borderTopColor: theme.accentLight,
+                borderRightColor: solPct > 0.25 ? theme.accentLight : "transparent",
+                borderBottomColor: solPct > 0.5 ? theme.accentLight : "transparent",
+                borderLeftColor: solPct > 0.75 ? theme.accentLight : "transparent",
+                transform: [{ rotate: `${-45 + usdcPct * 360}deg` }],
             }} />
             {/* Center content */}
             <View style={{ alignItems: "center" }}>
-                <Text style={{ color: theme.textPrimary, fontSize: size * 0.16, fontWeight: "900" }}>
-                    {formatBalance(total)}
+                <Text style={{ color: theme.textPrimary, fontSize: size * 0.13, fontWeight: "900", letterSpacing: -0.5 }}>
+                    {formatBalance(usdc)}
                 </Text>
-                <Text style={{ color: theme.textMuted, fontSize: size * 0.07, fontWeight: "700", letterSpacing: 1, marginTop: 2 }}>
+                <Text style={{ color: theme.blue, fontSize: size * 0.06, fontWeight: "800", letterSpacing: 1, marginTop: -2 }}>
                     USDC
+                </Text>
+
+                <View style={{ width: size * 0.3, height: 1, backgroundColor: theme.divider, marginVertical: 6 }} />
+
+                <Text style={{ color: theme.textPrimary, fontSize: size * 0.13, fontWeight: "900", letterSpacing: -0.5 }}>
+                    {formatBalance(sol)}
+                </Text>
+                <Text style={{ color: theme.accentLight, fontSize: size * 0.06, fontWeight: "800", letterSpacing: 1, marginTop: -2 }}>
+                    SOL
                 </Text>
             </View>
         </View>
@@ -179,10 +179,6 @@ export default function WalletScreen() {
     const [transactions, setTransactions] = useState<TxType[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-    const [showDeposit, setShowDeposit] = useState(false);
-    const [showWithdraw, setShowWithdraw] = useState(false);
-    const [amount, setAmount] = useState("");
-    const [actionLoading, setActionLoading] = useState(false);
     const [claimLoading, setClaimLoading] = useState(false);
 
     const available = wallet ? parseFloat(wallet.availableBalance) : 0;
@@ -219,98 +215,7 @@ export default function WalletScreen() {
         setRefreshing(false);
     };
 
-    const handleDeposit = async () => {
-        if (!user || !publicKey) {
-            showToast(publicKey ? "User not found" : "Wallet not connected", "error");
-            return;
-        }
-        const parsed = parseFloat(amount);
-        if (isNaN(parsed) || parsed <= 0) { showToast("Invalid amount", "error"); return; }
-        setActionLoading(true);
-        try {
-            const userPubkey = publicKey;
-            const mintPubkey = new PublicKey(TOKEN_MINT);
-            const treasuryPk = new PublicKey(TREASURY_PUBKEY);
 
-            // Fetch token decimals
-            const mintInfo = await getMint(CONNECTION, mintPubkey);
-            const decimals = mintInfo.decimals;
-            const atomicAmount = BigInt(Math.round(parsed * 10 ** decimals));
-
-            // Derive ATAs
-            const userAta = getAssociatedTokenAddressSync(mintPubkey, userPubkey, false);
-            const treasuryAta = getAssociatedTokenAddressSync(mintPubkey, treasuryPk, false);
-
-            // Build transfer instruction (user ATA → treasury ATA)
-            const transferIx = createTransferCheckedInstruction(
-                userAta,
-                mintPubkey,
-                treasuryAta,
-                userPubkey,
-                atomicAmount,
-                decimals,
-                [],
-                TOKEN_PROGRAM_ID,
-            );
-
-            // Ensure the treasury ATA exists (idempotent)
-            const ensureTreasuryAtaIx = createAssociatedTokenAccountIdempotentInstruction(
-                userPubkey, treasuryAta, treasuryPk, mintPubkey,
-            );
-
-            const latestBlockhash = await CONNECTION.getLatestBlockhash();
-            const tx = new Transaction({ feePayer: userPubkey, ...latestBlockhash })
-                .add(ensureTreasuryAtaIx)
-                .add(transferIx);
-
-            let txSignature = "";
-            await transact(async (w: Web3MobileWallet) => {
-                await w.authorize({
-                    cluster: "devnet",
-                    identity: { name: "Ikkii", uri: "https://ikkii.app", icon: "favicon.ico" },
-                });
-                const [sig] = await w.signAndSendTransactions({ transactions: [tx] });
-                txSignature = sig;
-            });
-
-            // Confirm on-chain then credit escrow DB via server
-            await CONNECTION.confirmTransaction({ signature: txSignature, ...latestBlockhash }, "confirmed");
-            const res = await escrowAPI.deposit(user.id, { amount: parsed, txSignature });
-            setWallet(res.wallet);
-            await refreshBalance();
-            showToast(`Deposited ${amount} USDC`, "success");
-            setShowDeposit(false);
-            setAmount("");
-        } catch (err: any) {
-            showToast(err.message || "Failed to deposit", "error");
-        } finally {
-            setActionLoading(false);
-        }
-    };
-
-    const handleWithdraw = async () => {
-        if (!user || !publicKey) {
-            showToast(publicKey ? "User not found" : "Wallet not connected", "error");
-            return;
-        }
-        const parsed = parseFloat(amount);
-        if (isNaN(parsed) || parsed <= 0) { showToast("Invalid amount", "error"); return; }
-        if (parsed > available) { showToast("Insufficient balance", "error"); return; }
-        setActionLoading(true);
-        try {
-            // Server handles the on-chain SPL transfer (treasury → user ATA) signed by authority
-            const res = await escrowAPI.withdraw(user.id, { amount: parsed, walletAddress: publicKey.toBase58() });
-            setWallet(res.wallet);
-            await refreshBalance();
-            showToast(`Withdrawn ${amount} USDC`, "success");
-            setShowWithdraw(false);
-            setAmount("");
-        } catch (err: any) {
-            showToast(err.message || "Failed to withdraw", "error");
-        } finally {
-            setActionLoading(false);
-        }
-    };
 
     const handleClaimWsol = async () => {
         if (!publicKey) {
@@ -404,7 +309,7 @@ export default function WalletScreen() {
                 >
                     <View style={{ padding: 22, alignItems: "center" }}>
                         {/* Ring chart */}
-                        <RingChart available={available} locked={locked} size={150} />
+                        <RingChart usdc={balanceUsdc || 0} sol={balanceSol || 0} size={150} />
 
                         {/* Tech divider */}
                         <View style={{ width: "60%", height: 1, backgroundColor: theme.divider, marginTop: 18, marginBottom: 14 }} />
@@ -412,46 +317,21 @@ export default function WalletScreen() {
                         {/* Legend row below chart — square dots */}
                         <View style={{ flexDirection: "row", gap: 20 }}>
                             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                                <View style={{ width: 6, height: 6, borderRadius: 1, backgroundColor: theme.green }} />
+                                <View style={{ width: 6, height: 6, borderRadius: 1, backgroundColor: theme.blue }} />
                                 <Text style={{ color: theme.textSecondary, fontSize: 10, fontWeight: "700", letterSpacing: 0.5, textTransform: "uppercase" }}>
-                                    Available
-                                </Text>
-                                <Text style={{ color: theme.green, fontSize: 11, fontWeight: "800" }}>
-                                    {formatBalance(available)}
+                                    Wallet USDC
                                 </Text>
                             </View>
                             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                                <View style={{ width: 6, height: 6, borderRadius: 1, backgroundColor: theme.amber }} />
+                                <View style={{ width: 6, height: 6, borderRadius: 1, backgroundColor: theme.accentLight }} />
                                 <Text style={{ color: theme.textSecondary, fontSize: 10, fontWeight: "700", letterSpacing: 0.5, textTransform: "uppercase" }}>
-                                    Locked
-                                </Text>
-                                <Text style={{ color: theme.amber, fontSize: 11, fontWeight: "800" }}>
-                                    {formatBalance(locked)}
+                                    Wallet SOL
                                 </Text>
                             </View>
                         </View>
                     </View>
                 </Card>
 
-                {/* ═══ ACTION BUTTONS ═══ */}
-                <View style={{ flexDirection: "row", gap: 10, paddingHorizontal: 20, marginTop: 14 }}>
-                    <View style={{ flex: 1 }}>
-                        <Button
-                            title="Deposit"
-                            onPress={() => setShowDeposit(true)}
-                            variant="primary"
-                            icon={<Ionicons name="arrow-down" size={15} color={theme.textInverse} />}
-                        />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                        <Button
-                            title="Withdraw"
-                            onPress={() => setShowWithdraw(true)}
-                            variant="secondary"
-                            icon={<Ionicons name="arrow-up" size={15} color={theme.accentLight} />}
-                        />
-                    </View>
-                </View>
 
                 {/* ═══ wSOL CLAIMABLE BANNER ═══ */}
                 {balanceWsol != null && balanceWsol > 0 && (
@@ -555,10 +435,8 @@ export default function WalletScreen() {
 
                     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
                         {[
-                            { label: "Available", value: formatBalance(available), icon: "checkmark-circle" as keyof typeof Ionicons.glyphMap, color: theme.green },
-                            { label: "Locked", value: formatBalance(locked), icon: "lock-closed" as keyof typeof Ionicons.glyphMap, color: theme.amber },
                             { label: "Wallet USDC", value: balanceUsdc !== null ? formatBalance(balanceUsdc) : "0.00", icon: "card" as keyof typeof Ionicons.glyphMap, color: theme.blue },
-                            { label: "SOL", value: balanceSol !== null ? balanceSol.toFixed(2) : "0.00", icon: "wallet-outline" as keyof typeof Ionicons.glyphMap, color: theme.accentLight },
+                            { label: "Wallet SOL", value: balanceSol !== null ? balanceSol.toFixed(2) : "0.00", icon: "wallet-outline" as keyof typeof Ionicons.glyphMap, color: theme.accentLight },
                         ].map((asset) => (
                             <Card
                                 key={asset.label}
@@ -624,51 +502,7 @@ export default function WalletScreen() {
                 </View>
             </ScrollView>
 
-            {/* Deposit Modal */}
-            <Modal
-                visible={showDeposit}
-                onClose={() => { setShowDeposit(false); setAmount(""); }}
-                title="Deposit Tokens"
-                confirmText="Deposit"
-                onConfirm={handleDeposit}
-                loading={actionLoading}
-            >
-                <Text style={{ color: theme.textSecondary, fontSize: 13, marginBottom: 16 }}>
-                    Add USDC tokens to your escrow wallet
-                </Text>
-                <Input
-                    label="Amount"
-                    placeholder="0.00"
-                    value={amount}
-                    onChangeText={setAmount}
-                    keyboardType="numeric"
-                />
-            </Modal>
 
-            {/* Withdraw Modal */}
-            <Modal
-                visible={showWithdraw}
-                onClose={() => { setShowWithdraw(false); setAmount(""); }}
-                title="Withdraw Tokens"
-                confirmText="Withdraw"
-                onConfirm={handleWithdraw}
-                confirmVariant="danger"
-                loading={actionLoading}
-            >
-                <Text style={{ color: theme.textSecondary, fontSize: 13, marginBottom: 6 }}>
-                    Withdraw USDC to your Solana wallet
-                </Text>
-                <Text style={{ color: theme.textMuted, fontSize: 11, marginBottom: 16 }}>
-                    Max available: {formatBalance(available)} USDC
-                </Text>
-                <Input
-                    label="Amount"
-                    placeholder="0.00"
-                    value={amount}
-                    onChangeText={setAmount}
-                    keyboardType="numeric"
-                />
-            </Modal>
         </View>
     );
 }

@@ -13,7 +13,7 @@ import { useToast } from "../../contexts/ToastContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { useWallet } from "../../components/WalletProvider";
 import { useTheme } from "../../contexts/ThemeContext";
-import { usersAPI, gameProfileAPI } from "../../services/api";
+import { usersAPI, gameProfileAPI, leaderboardAPI } from "../../services/api";
 import { SUPPORTED_GAMES } from "../../constants";
 import { GAME_ICONS } from "../../assets/games";
 import type { PlayerProfile, GameProfile } from "../../types";
@@ -39,6 +39,7 @@ export default function ProfileScreen() {
     const [linkClaimedChallengeMaxWins, setLinkClaimedChallengeMaxWins] = useState("");
     const [linkLoading, setLinkLoading] = useState(false);
     const [syncingGame, setSyncingGame] = useState<string | null>(null);
+    const [liveRank, setLiveRank] = useState<number | null>(null);
 
     // Logout Modal state
     const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -46,8 +47,16 @@ export default function ProfileScreen() {
     const fetchProfile = useCallback(async () => {
         if (!user) return;
         try {
-            const res = await usersAPI.getProfile(user.username);
-            setProfile(res.profile);
+            const [profileRes, rankRes] = await Promise.allSettled([
+                usersAPI.getProfile(user.username),
+                leaderboardAPI.getEntry(user.username),
+            ]);
+            if (profileRes.status === "fulfilled") setProfile(profileRes.value.profile);
+            if (rankRes.status === "fulfilled") {
+                const entry = rankRes.value.entry;
+                const rank = entry?.rank || entry?.currentRank || null;
+                setLiveRank(rank && rank > 0 ? rank : null);
+            }
         } catch (err) {
             console.error("Failed to fetch profile:", err);
         } finally {
@@ -56,6 +65,8 @@ export default function ProfileScreen() {
     }, [user?.username]);
 
     useEffect(() => { fetchProfile(); }, [fetchProfile]);
+
+
 
     // Fetch game profiles
     const fetchGameProfiles = useCallback(async () => {
@@ -205,7 +216,7 @@ export default function ProfileScreen() {
 
     const netPL = (profile.portfolio?.totalStakeWon ?? 0) - (profile.portfolio?.totalStakeLost ?? 0);
     const rankDiff = (profile.portfolio?.previousRank ?? 0) - (profile.portfolio?.currentRank ?? 0);
-    const currentRank = profile.portfolio?.currentRank;
+    const currentRank = (liveRank && liveRank > 0) ? liveRank : (profile.portfolio?.currentRank && profile.portfolio.currentRank > 0 ? profile.portfolio.currentRank : null);
     const totalDuels = profile.wins + profile.losses;
 
     return (
@@ -241,7 +252,7 @@ export default function ProfileScreen() {
                                 borderWidth: 2,
                                 borderColor: theme.borderNeon,
                             }}>
-                                <Avatar username={user.username} size="lg" rank={currentRank} pfp={profile.pfp} />
+                                <Avatar username={user.username} size="lg" rank={currentRank ?? undefined} pfp={profile.pfp} />
                             </View>
                             {/* Pencil edit badge */}
                             <View style={{
@@ -315,7 +326,7 @@ export default function ProfileScreen() {
                             <View style={{ flex: 1, alignItems: "center" }}>
                                 <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
                                     <Text style={{ color: theme.accentLight, fontSize: 22, fontWeight: "900", letterSpacing: -0.5 }}>
-                                        #{currentRank}
+                                        {currentRank ? `#${currentRank}` : "—"}
                                     </Text>
                                     {rankDiff !== 0 && (
                                         <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -388,108 +399,36 @@ export default function ProfileScreen() {
                         </Text>
                     </View>
 
-                    {/* Win/Loss bar */}
-                    <Card noFill style={{
-                        borderRadius: 12,
-                        padding: 14,
-                        marginBottom: 10,
-                    }}>
-                        {/* W/L visual bar — sharper corners */}
-                        <View style={{ flexDirection: "row", height: 6, borderRadius: 2, overflow: "hidden", marginBottom: 10 }}>
-                            <View style={{
-                                flex: profile.wins || 0.5,
-                                backgroundColor: theme.green,
-                                borderTopLeftRadius: 2,
-                                borderBottomLeftRadius: 2,
-                            }} />
-                            <View style={{
-                                flex: profile.losses || 0.5,
-                                backgroundColor: theme.red,
-                                borderTopRightRadius: 2,
-                                borderBottomRightRadius: 2,
-                            }} />
-                        </View>
-                        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                                <View style={{ width: 6, height: 6, borderRadius: 1, backgroundColor: theme.green }} />
-                                <Text style={{ color: theme.textSecondary, fontSize: 10, fontWeight: "700", letterSpacing: 0.5, textTransform: "uppercase" }}>Wins</Text>
-                                <Text style={{ color: theme.green, fontSize: 13, fontWeight: "900" }}>{profile.wins}</Text>
-                            </View>
-                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                                <View style={{ width: 6, height: 6, borderRadius: 1, backgroundColor: theme.red }} />
-                                <Text style={{ color: theme.textSecondary, fontSize: 10, fontWeight: "700", letterSpacing: 0.5, textTransform: "uppercase" }}>Losses</Text>
-                                <Text style={{ color: theme.red, fontSize: 13, fontWeight: "900" }}>{profile.losses}</Text>
+                    {/* ── W/L Line Graph ── */}
+                    <Card noFill noPadding style={{ borderRadius: 14, overflow: "hidden", marginBottom: 2 }}>
+                        <View style={{ height: 2, backgroundColor: theme.accent + "60" }} />
+                        <View style={{ padding: 16 }}>
+                            {/* Header */}
+                            <Text style={{ color: theme.textPrimary, fontSize: 11, fontWeight: "800", letterSpacing: 2, textTransform: "uppercase", marginBottom: 14 }}>
+                                Performance
+                            </Text>
+
+                            {/* Stats summary row */}
+                            <View style={{ flexDirection: "row", gap: 16 }}>
+                                <View>
+                                    <Text style={{ color: theme.green, fontSize: 20, fontWeight: "900", letterSpacing: -0.5 }}>{profile.wins}</Text>
+                                    <Text style={{ color: theme.textMuted, fontSize: 8, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase" }}>Wins</Text>
+                                </View>
+                                <View style={{ width: 1, height: 32, backgroundColor: theme.divider, alignSelf: "center" }} />
+                                <View>
+                                    <Text style={{ color: theme.red, fontSize: 20, fontWeight: "900", letterSpacing: -0.5 }}>{profile.losses}</Text>
+                                    <Text style={{ color: theme.textMuted, fontSize: 8, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase" }}>Losses</Text>
+                                </View>
+                                <View style={{ width: 1, height: 32, backgroundColor: theme.divider, alignSelf: "center" }} />
+                                <View>
+                                    <Text style={{ color: theme.accentLight, fontSize: 20, fontWeight: "900", letterSpacing: -0.5 }}>
+                                        {profile.wins + profile.losses > 0 ? `${Math.round((profile.wins / (profile.wins + profile.losses)) * 100)}%` : "—"}
+                                    </Text>
+                                    <Text style={{ color: theme.textMuted, fontSize: 8, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase" }}>Win Rate</Text>
+                                </View>
                             </View>
                         </View>
                     </Card>
-
-                    {/* Stats grid: 2x2 */}
-                    {profile.portfolio && (
-                        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
-                            {[
-                                {
-                                    label: "Total Won",
-                                    value: profile.portfolio.totalStakeWon.toLocaleString(),
-                                    color: theme.green,
-                                    icon: "arrow-up-circle" as keyof typeof Ionicons.glyphMap,
-                                },
-                                {
-                                    label: "Total Lost",
-                                    value: profile.portfolio.totalStakeLost.toLocaleString(),
-                                    color: theme.red,
-                                    icon: "arrow-down-circle" as keyof typeof Ionicons.glyphMap,
-                                },
-                                {
-                                    label: "Net P&L",
-                                    value: `${netPL >= 0 ? "+" : ""}${netPL.toLocaleString()}`,
-                                    color: netPL >= 0 ? theme.green : theme.red,
-                                    icon: "stats-chart" as keyof typeof Ionicons.glyphMap,
-                                },
-                                {
-                                    label: "SOL Balance",
-                                    value: balanceSol !== null ? balanceSol.toFixed(2) : (profile.portfolio.solanaBalance ?? 0).toFixed(2),
-                                    color: theme.accentLight,
-                                    icon: "wallet-outline" as keyof typeof Ionicons.glyphMap,
-                                },
-                            ].map((stat) => (
-                                <Card
-                                    key={stat.label}
-                                    noFill
-                                    noPadding
-                                    style={{
-                                        width: "48%",
-                                        borderRadius: 12,
-                                    }}
-                                >
-                                    {/* Top accent line */}
-                                    <View style={{ alignItems: "center" }}>
-                                        <View style={{ width: "40%", height: 2, backgroundColor: stat.color + "50", borderBottomLeftRadius: 1, borderBottomRightRadius: 1 }} />
-                                    </View>
-                                    <View style={{ padding: 14 }}>
-                                        <View style={{
-                                            width: 28, height: 28, borderRadius: 7,
-                                            backgroundColor: stat.color + "18", borderWidth: 1,
-                                            borderColor: stat.color + "30", alignItems: "center",
-                                            justifyContent: "center", marginBottom: 8,
-                                        }}>
-                                            <Ionicons name={stat.icon} size={14} color={stat.color} />
-                                        </View>
-                                        <Text style={{
-                                            fontSize: 16, fontWeight: "900", color: stat.color, letterSpacing: -0.5,
-                                        }}>
-                                            {stat.value}
-                                        </Text>
-                                        <Text style={{
-                                            color: theme.textMuted, fontSize: 9, textTransform: "uppercase",
-                                            letterSpacing: 2, marginTop: 3, fontWeight: "700",
-                                        }}>
-                                            {stat.label}
-                                        </Text>
-                                    </View>
-                                </Card>
-                            ))}
-                        </View>
-                    )}
                 </View>
 
                 {/* ═══ GAME ACCOUNTS SECTION ═══ */}

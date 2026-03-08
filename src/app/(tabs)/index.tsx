@@ -10,7 +10,7 @@ import { Card } from "../../components/ui/Card";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
-import { duelsAPI, gamesAPI } from "../../services/api";
+import { duelsAPI, gamesAPI, leaderboardAPI } from "../../services/api";
 import type { Duel, Game } from "../../types";
 
 /** Reusable futuristic section header */
@@ -73,19 +73,28 @@ export default function HomeScreen() {
     const [disputedDuels, setDisputedDuels] = useState<Duel[]>([]);
     const [settledDuels, setSettledDuels] = useState<Duel[]>([]);
     const [games, setGames] = useState<Game[]>([]);
+    const [userRanks, setUserRanks] = useState<Record<string, number>>({});
     const [searchQuery, setSearchQuery] = useState("");
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
 
     const fetchDuels = useCallback(async () => {
         try {
-            const [open, active, disputed, settled, gamesData] = await Promise.all([
+            const [open, active, disputed, settled, gamesData, lbData] = await Promise.all([
                 duelsAPI.getByStatus("OPEN"),
                 duelsAPI.getByStatus("ACTIVE"),
                 duelsAPI.getByStatus("DISPUTED"),
                 duelsAPI.getByStatus("SETTLED"),
                 gamesAPI.getAll().catch(() => ({ games: [] })),
+                leaderboardAPI.getList().catch(() => ({ leaderboard: [] }))
             ]);
+
+            const ranksMap: Record<string, number> = {};
+            lbData.leaderboard?.forEach((e: any) => {
+                ranksMap[e.username] = e.rank || e.currentRank;
+            });
+            setUserRanks(ranksMap);
+
             setOpenDuels(open.duels);
             setActiveDuels(
                 active.duels.filter(
@@ -123,6 +132,12 @@ export default function HomeScreen() {
     const liveDuels = [...activeDuels, ...disputedDuels];
     const filteredOpenDuels = filterDuels(openDuels);
     const filteredSettledDuels = filterDuels(settledDuels);
+
+    const getDisplayUser = (duel: Duel) => {
+        const isMyDuel = duel.player1Username === currentUser || duel.player2Username === currentUser;
+        if (isMyDuel) return duel.player1Username === currentUser ? duel.player2Username : duel.player1Username;
+        return duel.player1Username;
+    };
 
     if (loading) {
         return (
