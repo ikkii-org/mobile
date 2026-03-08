@@ -13,7 +13,7 @@ import { useToast } from "../../contexts/ToastContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { COMMON_TOKENS, DUEL_POLL_INTERVAL_MS, SUPPORTED_GAMES } from "../../constants";
-import { duelsAPI, verificationAPI, gameProfileAPI, usersAPI } from "../../services/api";
+import { duelsAPI, verificationAPI, gameProfileAPI, usersAPI, escrowAPI } from "../../services/api";
 import type { Duel, GameProfile, User } from "../../types";
 import { useWallet } from "../../components/WalletProvider";
 import { transact, Web3MobileWallet } from "@solana-mobile/mobile-wallet-adapter-protocol-web3js";
@@ -72,6 +72,7 @@ export default function DuelDetailScreen() {
 
     // Winner Prompt State
     const [showWinnerPrompt, setShowWinnerPrompt] = useState(false);
+    const [hasClaimedSol, setHasClaimedSol] = useState(false);
 
     const fetchDuel = useCallback(async () => {
         try {
@@ -138,6 +139,12 @@ export default function DuelDetailScreen() {
                 const hasSeen = await AsyncStorage.getItem(storageKey);
                 if (!hasSeen) {
                     setShowWinnerPrompt(true);
+                }
+
+                const claimedSolKey = `@claimed_sol_${duel.id}`;
+                const claimedVal = await AsyncStorage.getItem(claimedSolKey);
+                if (claimedVal === "true") {
+                    setHasClaimedSol(true);
                 }
             } catch (err) {
                 console.warn("AsyncStorage read failed", err);
@@ -383,6 +390,8 @@ export default function DuelDetailScreen() {
             });
 
             await CONNECTION.confirmTransaction({ signature: txSignature, ...latestBlockhash }, "confirmed");
+            setHasClaimedSol(true);
+            await AsyncStorage.setItem(`@claimed_sol_${duel.id}`, "true");
             showToast("SOL claimed to your wallet!", "success");
         } catch (err: any) {
             console.error("Unwrap SOL error:", err);
@@ -748,7 +757,7 @@ export default function DuelDetailScreen() {
                             <Text style={{ color: theme.textMuted, fontSize: 13, marginTop: 4 }}>
                                 {duel.stakeAmount * 2} {tokenSymbol} claimed
                             </Text>
-                            {duel.winnerUsername === currentUser && isNativeSol(new PublicKey(duel.tokenMint)) && (
+                            {duel.winnerUsername === currentUser && isNativeSol(new PublicKey(duel.tokenMint)) && !hasClaimedSol && (
                                 <View style={{ marginTop: 16, width: "100%" }}>
                                     <Button
                                         title="Claim SOL"
@@ -833,7 +842,7 @@ export default function DuelDetailScreen() {
                         Your winnings of <Text style={{ color: theme.green, fontWeight: "900" }}>{duel?.stakeAmount ? duel.stakeAmount * 2 : 0} {tokenSymbol}</Text> have been deposited into your Ikkii vault.
                     </Text>
                     <Text style={{ color: theme.textSecondary, fontSize: 13, textAlign: "center", marginTop: 12 }}>
-                        Would you like to withdraw them to your Solana wallet now?
+                        Please withdraw them to your Solana wallet to complete the process.
                     </Text>
                 </View>
 
@@ -845,14 +854,6 @@ export default function DuelDetailScreen() {
                         variant="primary"
                         size="lg"
                         icon={<Ionicons name="wallet-outline" size={16} color={theme.textInverse} />}
-                    />
-                    <Button
-                        title="Keep in Ikkii Vault"
-                        onPress={handleKeepInVault}
-                        variant="secondary"
-                        size="lg"
-                        disabled={actionLoading}
-                        icon={<Ionicons name="shield-checkmark" size={16} color={theme.accentLight} />}
                     />
                 </View>
             </Modal>

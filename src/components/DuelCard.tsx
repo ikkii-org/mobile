@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, View, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import type { Duel } from "../types";
 import { Avatar } from "./ui/Avatar";
-import { COMMON_TOKENS } from "../constants";
+import { COMMON_TOKENS, SUPPORTED_GAMES } from "../constants";
 import { useTheme } from "../contexts/ThemeContext";
 
 interface DuelCardProps {
@@ -85,6 +85,8 @@ export function DuelCard({ duel, currentUsername, onPress, onAction, variant = "
         return () => clearInterval(interval);
     }, [duel.expiresAt, duel.status]);
 
+    const linkedGame = duel.gameId ? SUPPORTED_GAMES.find((g) => g.name === duel.gameId) : null;
+
     // ─── COMPACT VARIANT ─── (carousel / grid — fixed width, vertical)
     if (variant === "compact") {
         return (
@@ -140,6 +142,13 @@ export function DuelCard({ duel, currentUsername, onPress, onAction, variant = "
 
                     {/* Hero stake amount */}
                     <View style={{ alignItems: "center", marginBottom: 10 }}>
+                        {linkedGame && (
+                            <Image
+                                source={{ uri: linkedGame.icon }}
+                                style={{ width: 16, height: 16, marginBottom: 4 }}
+                                resizeMode="contain"
+                            />
+                        )}
                         <Text style={{
                             color: theme.textPrimary,
                             fontSize: 26,
@@ -301,12 +310,21 @@ export function DuelCard({ duel, currentUsername, onPress, onAction, variant = "
                         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
                             <Avatar username={displayUser ?? duel.player1Username} size="xs" />
                             <View style={{ flex: 1, marginLeft: 8 }}>
-                                <Text
-                                    style={{ color: theme.textPrimary, fontWeight: "700", fontSize: 13, letterSpacing: 0.2 }}
-                                    numberOfLines={1}
-                                >
-                                    {isMyDuel ? (displayUser ?? "Waiting...") : duel.player1Username}
-                                </Text>
+                                <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                                    {linkedGame && (
+                                        <Image
+                                            source={{ uri: linkedGame.icon }}
+                                            style={{ width: 12, height: 12 }}
+                                            resizeMode="contain"
+                                        />
+                                    )}
+                                    <Text
+                                        style={{ color: theme.textPrimary, fontWeight: "700", fontSize: 13, letterSpacing: 0.2 }}
+                                        numberOfLines={1}
+                                    >
+                                        {isMyDuel ? (displayUser ?? "Waiting...") : duel.player1Username}
+                                    </Text>
+                                </View>
                                 {!isMyDuel && !duel.player2Username && (
                                     <Text style={{ color: theme.textMuted, fontSize: 9, marginTop: 1, letterSpacing: 0.3 }}>
                                         Open challenge

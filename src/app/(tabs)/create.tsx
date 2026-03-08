@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
@@ -74,7 +75,7 @@ export default function CreateDuelScreen() {
         }
     }, []);
 
-    useEffect(() => { fetchLinkedProfiles(); }, [fetchLinkedProfiles]);
+    useFocusEffect(useCallback(() => { fetchLinkedProfiles(); }, [fetchLinkedProfiles]));
 
     const getLinkedProfile = (gameName: string): GameProfile | undefined =>
         linkedProfiles.find((p) => p.gameName === gameName);

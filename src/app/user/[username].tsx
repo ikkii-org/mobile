@@ -7,7 +7,7 @@ import { Card } from "../../components/ui/Card";
 import { Avatar } from "../../components/ui/Avatar";
 import { useTheme } from "../../contexts/ThemeContext";
 import { usersAPI, leaderboardAPI } from "../../services/api";
-import { GAME_ICONS } from "../../assets/games";
+import { SUPPORTED_GAMES } from "../../constants";
 import type { PlayerProfile, LeaderboardEntry, GameProfile } from "../../types";
 
 function StatBox({
@@ -226,6 +226,7 @@ export default function UserProfileScreen() {
 
                         <View style={{ gap: 8 }}>
                             {gameProfiles.map((gp) => {
+                                const linkedGame = SUPPORTED_GAMES.find((g) => g.name === gp.gameName);
                                 const stats = gp.stats as { trophies?: number; bestTrophies?: number; clan?: string; expLevel?: number } | null;
                                 return (
                                     <Card
@@ -249,9 +250,9 @@ export default function UserProfileScreen() {
                                                 alignItems: "center", justifyContent: "center",
                                                 marginRight: 12, overflow: "hidden",
                                             }}>
-                                                {GAME_ICONS[gp.gameName] ? (
+                                                {linkedGame ? (
                                                     <Image
-                                                        source={GAME_ICONS[gp.gameName]}
+                                                        source={{ uri: linkedGame.icon }}
                                                         style={{ width: 28, height: 28, borderRadius: 4 }}
                                                         resizeMode="contain"
                                                     />

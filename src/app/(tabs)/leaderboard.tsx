@@ -84,7 +84,7 @@ function Podium({ entries, currentUsername }: { entries: LeaderboardEntry[]; cur
                                 borderWidth: 2,
                                 borderColor: isCurrent ? theme.borderNeon : medalColor + "60",
                             }}>
-                                <Avatar username={entry.username} size={entry.rank === 1 ? "md" : "sm"} />
+                                <Avatar username={entry.username} size={entry.rank === 1 ? "md" : "sm"} pfp={entry.pfp} />
                             </View>
                             <Text
                                 style={{
@@ -192,7 +192,7 @@ function LeaderboardCard({ entry, isCurrentUser }: { entry: LeaderboardEntry; is
                 </Text>
             </View>
 
-            <Avatar username={entry.username} size="sm" />
+            <Avatar username={entry.username} size="sm" pfp={entry.pfp} />
 
             <View style={{ flex: 1, marginLeft: 10 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
