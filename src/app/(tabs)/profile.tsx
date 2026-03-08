@@ -40,6 +40,9 @@ export default function ProfileScreen() {
     const [linkLoading, setLinkLoading] = useState(false);
     const [syncingGame, setSyncingGame] = useState<string | null>(null);
 
+    // Logout Modal state
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
+
     const fetchProfile = useCallback(async () => {
         if (!user) return;
         try {
@@ -79,18 +82,14 @@ export default function ProfileScreen() {
     };
 
     const handleLogout = () => {
-        Alert.alert("Logout", "Are you sure you want to log out?", [
-            { text: "Cancel", style: "cancel" },
-            {
-                text: "Logout",
-                style: "destructive",
-                onPress: async () => {
-                    await logout();
-                    showToast("Logged out", "info");
-                    router.replace("/onboarding");
-                },
-            },
-        ]);
+        setShowLogoutModal(true);
+    };
+
+    const handleConfirmLogout = async () => {
+        setShowLogoutModal(false);
+        await logout();
+        showToast("Logged out", "info");
+        router.replace("/onboarding");
     };
 
     const handlePickAvatar = async () => {
@@ -785,6 +784,20 @@ export default function ProfileScreen() {
                         </Text>
                     </View>
                 )}
+            </Modal>
+
+            {/* Logout Consent Modal */}
+            <Modal
+                visible={showLogoutModal}
+                onClose={() => setShowLogoutModal(false)}
+                title="Logout"
+                confirmText="Logout"
+                confirmVariant="danger"
+                onConfirm={handleConfirmLogout}
+            >
+                <Text style={{ color: theme.textSecondary, fontSize: 13, marginBottom: 8 }}>
+                    Are you sure you want to log out of your account?
+                </Text>
             </Modal>
         </View>
     );

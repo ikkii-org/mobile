@@ -10,9 +10,11 @@ import {
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
+import { Avatar } from "../components/ui/Avatar";
 import { useToast } from "../contexts/ToastContext";
 import { REGEX } from "../constants";
 import { useWallet } from "../components/WalletProvider";
@@ -45,6 +47,27 @@ export default function SignupScreen() {
         }
         setErrors(errs);
         return Object.keys(errs).length === 0;
+    };
+
+    const handlePickAvatar = async () => {
+        try {
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ["images"],
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.7,
+                base64: true,
+            });
+            if (result.canceled || !result.assets?.[0]?.base64) return;
+
+            const asset = result.assets[0];
+            const mimeType = asset.mimeType ?? "image/jpeg";
+            const dataUri = `data:${mimeType};base64,${asset.base64}`;
+
+            setPfp(dataUri);
+        } catch (err: any) {
+            showToast("Failed to pick image", "error");
+        }
     };
 
     const handleSignup = async () => {
@@ -214,14 +237,41 @@ export default function SignupScreen() {
                                 )}
                             </View>
 
-                            <Input
-                                label="Profile Picture URL (Optional)"
-                                placeholder="https://..."
-                                value={pfp}
-                                onChangeText={setPfp}
-                                autoCapitalize="none"
-                                autoCorrect={false}
-                            />
+                            {/* PFP Picker Area */}
+                            <Pressable
+                                onPress={handlePickAvatar}
+                                style={{
+                                    alignItems: "center",
+                                    marginVertical: 12,
+                                    padding: 16,
+                                    backgroundColor: theme.bgMuted + "40",
+                                    borderRadius: 16,
+                                    borderWidth: 1,
+                                    borderColor: theme.border,
+                                    borderStyle: "dashed",
+                                }}
+                            >
+                                <Avatar
+                                    username={username || "new_user"}
+                                    pfp={pfp || undefined}
+                                    size="lg"
+                                />
+                                <View style={{
+                                    flexDirection: "row",
+                                    alignItems: "center",
+                                    gap: 6,
+                                    marginTop: 12,
+                                    backgroundColor: theme.accentBg,
+                                    paddingHorizontal: 12,
+                                    paddingVertical: 6,
+                                    borderRadius: 20,
+                                }}>
+                                    <Ionicons name="camera" size={14} color={theme.accentLight} />
+                                    <Text style={{ color: theme.accentLight, fontSize: 11, fontWeight: "700" }}>
+                                        {pfp ? "Change Picture" : "Choose Picture"}
+                                    </Text>
+                                </View>
+                            </Pressable>
 
                             <View style={{ marginTop: 6 }}>
                                 <Button
