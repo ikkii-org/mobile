@@ -48,7 +48,7 @@ export function Modal({
                 <Pressable
                     style={{
                         width: "100%",
-                        backgroundColor: theme.bgGlass,
+                        backgroundColor: "#FFFFFF",
                         borderWidth: 1,
                         borderColor: theme.borderStrong,
                         borderRadius: 24,

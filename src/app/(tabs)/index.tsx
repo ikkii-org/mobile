@@ -258,13 +258,15 @@ export default function HomeScreen() {
                             showsHorizontalScrollIndicator={false}
                             contentContainerStyle={{ paddingHorizontal: 20, gap: 10 }}
                             renderItem={({ item }) => (
-                                <DuelCard
-                                    duel={item}
-                                    currentUsername={currentUser}
-                                    onPress={() => router.push(`/duel/${item.id}`)}
-                                    onAction={() => router.push(`/duel/${item.id}`)}
-                                    variant="compact"
-                                />
+                                <View style={{ paddingRight: 10 }}>
+                                    <DuelCard
+                                        duel={item}
+                                        currentUsername={currentUser}
+                                        onPress={() => router.push(`/duel/${item.id}`)}
+                                        onAction={() => router.push(`/duel/${item.id}`)}
+                                        variant="compact"
+                                    />
+                                </View>
                             )}
                         />
                     </View>
@@ -282,7 +284,7 @@ export default function HomeScreen() {
                     {openDuels.length > 0 ? (
                         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
                             {openDuels.map((duel) => (
-                                <View key={duel.id} style={{ width: "48%" }}>
+                                <View key={duel.id} style={{ width: "48%", marginBottom: 10 }}>
                                     <DuelCard
                                         duel={duel}
                                         currentUsername={currentUser}
@@ -313,13 +315,14 @@ export default function HomeScreen() {
 
                     {settledDuels.length > 0 ? (
                         settledDuels.map((duel) => (
-                            <DuelCard
-                                key={duel.id}
-                                duel={duel}
-                                currentUsername={currentUser}
-                                onPress={() => router.push(`/duel/${duel.id}`)}
-                                variant="full"
-                            />
+                            <View key={duel.id} style={{ marginBottom: 12 }}>
+                                <DuelCard
+                                    duel={duel}
+                                    currentUsername={currentUser}
+                                    onPress={() => router.push(`/duel/${duel.id}`)}
+                                    variant="full"
+                                />
+                            </View>
                         ))
                     ) : (
                         <EmptyState

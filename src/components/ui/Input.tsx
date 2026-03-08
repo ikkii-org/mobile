@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Text, TextInput, View, type TextInputProps } from "react-native";
+import { Text, TextInput, View, Pressable, type TextInputProps } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../contexts/ThemeContext";
 
 interface InputProps extends Omit<TextInputProps, "className"> {
@@ -11,6 +12,7 @@ interface InputProps extends Omit<TextInputProps, "className"> {
 export function Input({ label, error, containerClassName = "", ...props }: InputProps) {
     const theme = useTheme();
     const [focused, setFocused] = useState(false);
+    const [isSecure, setIsSecure] = useState(props.secureTextEntry || false);
 
     const borderColor = error
         ? theme.red
@@ -43,23 +45,47 @@ export function Input({ label, error, containerClassName = "", ...props }: Input
                     {label}
                 </Text>
             </View>
-            <TextInput
-                style={{
-                    backgroundColor: theme.bgInput,
-                    borderRadius: 10,
-                    paddingHorizontal: 14,
-                    paddingVertical: 13,
-                    color: theme.textPrimary,
-                    fontSize: 15,
-                    fontWeight: "500",
-                    borderWidth: 1.5,
-                    borderColor,
-                }}
-                placeholderTextColor={theme.textMuted}
-                onFocus={() => setFocused(true)}
-                onBlur={() => setFocused(false)}
-                {...props}
-            />
+
+            <View style={{ position: "relative", justifyContent: "center" }}>
+                <TextInput
+                    style={{
+                        backgroundColor: theme.bgInput,
+                        borderRadius: 10,
+                        paddingHorizontal: 14,
+                        paddingVertical: 13,
+                        paddingRight: props.secureTextEntry ? 44 : 14, // Leave room for face icon
+                        color: theme.textPrimary,
+                        fontSize: 15,
+                        fontWeight: "500",
+                        borderWidth: 1.5,
+                        borderColor,
+                    }}
+                    placeholderTextColor={theme.textMuted}
+                    onFocus={() => setFocused(true)}
+                    onBlur={() => setFocused(false)}
+                    {...props}
+                    secureTextEntry={props.secureTextEntry ? isSecure : props.secureTextEntry}
+                />
+                {props.secureTextEntry && (
+                    <Pressable
+                        onPress={() => setIsSecure(!isSecure)}
+                        style={{
+                            position: "absolute",
+                            right: 0,
+                            paddingHorizontal: 16,
+                            height: "100%",
+                            justifyContent: "center",
+                        }}
+                    >
+                        <Ionicons
+                            name={isSecure ? "eye-off-outline" : "eye-outline"}
+                            size={20}
+                            color={theme.textMuted}
+                        />
+                    </Pressable>
+                )}
+            </View>
+
             {error && (
                 <Text
                     style={{

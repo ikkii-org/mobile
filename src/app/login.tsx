@@ -6,6 +6,7 @@ import {
     ScrollView,
     Text,
     View,
+    Image,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
@@ -64,29 +65,11 @@ export default function LoginScreen() {
                 >
                     {/* Logo / Hero */}
                     <View style={{ alignItems: "center", marginBottom: 48 }}>
-                        <View style={{
-                            width: 72,
-                            height: 72,
-                            borderRadius: 20,
-                            backgroundColor: theme.accentBg,
-                            alignItems: "center",
-                            justifyContent: "center",
-                            borderWidth: 1,
-                            borderColor: theme.accent + "60",
-                            marginBottom: 20,
-                        }}>
-                            <Ionicons name="flash" size={34} color={theme.accentLight} />
-                        </View>
-
-                        <Text style={{
-                            fontSize: 44,
-                            fontWeight: "900",
-                            color: theme.textPrimary,
-                            letterSpacing: 8,
-                            marginBottom: 6,
-                        }}>
-                            IKKII
-                        </Text>
+                        <Image
+                            source={require("../../ikkii.png")}
+                            style={{ width: 120, height: 120, marginBottom: 20 }}
+                            resizeMode="contain"
+                        />
                         <Text style={{ color: theme.textMuted, fontSize: 13, letterSpacing: 2, textTransform: "uppercase" }}>
                             Welcome back, warrior
                         </Text>
@@ -129,7 +112,6 @@ export default function LoginScreen() {
                                 onPress={handleLogin}
                                 loading={loading}
                                 size="lg"
-                                icon={<Ionicons name="flash" size={16} color={theme.textInverse} />}
                             />
                         </View>
                     </Card>

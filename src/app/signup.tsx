@@ -279,7 +279,6 @@ export default function SignupScreen() {
                                     onPress={handleSignup}
                                     loading={loading}
                                     size="lg"
-                                    icon={<Ionicons name="flash" size={16} color={theme.textInverse} />}
                                 />
                             </View>
                         </View>
