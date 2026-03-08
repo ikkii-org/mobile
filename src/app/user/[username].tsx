@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Pressable, ScrollView, Text, View, ActivityIndicator } from "react-native";
+import { Image, Pressable, ScrollView, Text, View, ActivityIndicator } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -7,7 +7,8 @@ import { Card } from "../../components/ui/Card";
 import { Avatar } from "../../components/ui/Avatar";
 import { useTheme } from "../../contexts/ThemeContext";
 import { usersAPI, leaderboardAPI } from "../../services/api";
-import type { PlayerProfile, LeaderboardEntry } from "../../types";
+import { GAME_ICONS } from "../../assets/games";
+import type { PlayerProfile, LeaderboardEntry, GameProfile } from "../../types";
 
 function StatBox({
     label,
@@ -49,12 +50,14 @@ export default function UserProfileScreen() {
 
     const [profile, setProfile] = useState<PlayerProfile | null>(null);
     const [rankEntry, setRankEntry] = useState<LeaderboardEntry | null>(null);
+    const [gameProfiles, setGameProfiles] = useState<GameProfile[]>([]);
     const [loading, setLoading] = useState(true);
 
     const fetchProfile = useCallback(async () => {
-        const [profileRes, rankRes] = await Promise.allSettled([
+        const [profileRes, rankRes, gameRes] = await Promise.allSettled([
             usersAPI.getProfile(username),
             leaderboardAPI.getEntry(username),
+            usersAPI.getGameProfiles(username),
         ]);
         if (profileRes.status === "fulfilled") {
             setProfile(profileRes.value.profile);
@@ -65,6 +68,11 @@ export default function UserProfileScreen() {
             setRankEntry(rankRes.value.entry);
         } else {
             console.warn("Failed to fetch leaderboard entry:", rankRes.reason);
+        }
+        if (gameRes.status === "fulfilled") {
+            setGameProfiles(gameRes.value.profiles);
+        } else {
+            console.warn("Failed to fetch game profiles:", gameRes.reason);
         }
         setLoading(false);
     }, [username]);
@@ -132,7 +140,7 @@ export default function UserProfileScreen() {
 
                 {/* Avatar + Name */}
                 <View style={{ alignItems: "center", marginBottom: 24 }}>
-                    <Avatar username={profile.username} size="lg" rank={rank} />
+                    <Avatar username={profile.username} size="lg" rank={rank} pfp={profile.pfp} />
                     <Text style={{ color: theme.textPrimary, fontSize: 24, fontWeight: "900", marginTop: 16 }}>
                         {profile.username}
                     </Text>
@@ -180,14 +188,14 @@ export default function UserProfileScreen() {
                     </View>
                 </Card>
 
-                {/* Stats */}
+                {/* Duel Stats */}
                 <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
                     <StatBox label="Wins" value={String(profile.wins)} color={theme.green} />
                     <StatBox label="Losses" value={String(profile.losses)} color={theme.red} />
                 </View>
 
                 {(profile.portfolio || rankEntry) && (
-                    <View style={{ flexDirection: "row", gap: 12, marginBottom: 24 }}>
+                    <View style={{ flexDirection: "row", gap: 12, marginBottom: 20 }}>
                         <StatBox
                             label="Total Won"
                             value={(rankEntry?.totalStakeWon ?? profile.portfolio?.totalStakeWon ?? 0).toLocaleString()}
@@ -198,6 +206,102 @@ export default function UserProfileScreen() {
                             value={(rankEntry?.totalStakeLost ?? profile.portfolio?.totalStakeLost ?? 0).toLocaleString()}
                             color={theme.red}
                         />
+                    </View>
+                )}
+
+                {/* Game Accounts */}
+                {gameProfiles.length > 0 && (
+                    <View style={{ marginBottom: 24 }}>
+                        {/* Section header */}
+                        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
+                            <View style={{ width: 12, height: 2, backgroundColor: theme.accent, borderRadius: 1, marginRight: 4 }} />
+                            <View style={{ width: 4, height: 4, borderRadius: 1, backgroundColor: theme.accent, marginRight: 8 }} />
+                            <Text style={{
+                                color: theme.textPrimary, fontSize: 11, fontWeight: "800",
+                                letterSpacing: 2, textTransform: "uppercase",
+                            }}>
+                                Game Accounts
+                            </Text>
+                        </View>
+
+                        <View style={{ gap: 8 }}>
+                            {gameProfiles.map((gp) => {
+                                const stats = gp.stats as { trophies?: number; bestTrophies?: number; clan?: string; expLevel?: number } | null;
+                                return (
+                                    <Card
+                                        key={gp.id}
+                                        noFill
+                                        noPadding
+                                        style={{ borderRadius: 12, borderColor: theme.borderNeon }}
+                                    >
+                                        {/* Top accent line */}
+                                        <View style={{ alignItems: "center" }}>
+                                            <View style={{ width: "30%", height: 2, backgroundColor: theme.accentNeon, borderBottomLeftRadius: 1, borderBottomRightRadius: 1 }} />
+                                        </View>
+
+                                        <View style={{ flexDirection: "row", alignItems: "center", padding: 14 }}>
+                                            {/* Game icon */}
+                                            <View style={{
+                                                width: 36, height: 36, borderRadius: 8,
+                                                backgroundColor: theme.accent + "18",
+                                                borderWidth: 1,
+                                                borderColor: theme.accent + "30",
+                                                alignItems: "center", justifyContent: "center",
+                                                marginRight: 12, overflow: "hidden",
+                                            }}>
+                                                {GAME_ICONS[gp.gameName] ? (
+                                                    <Image
+                                                        source={GAME_ICONS[gp.gameName]}
+                                                        style={{ width: 28, height: 28, borderRadius: 4 }}
+                                                        resizeMode="contain"
+                                                    />
+                                                ) : (
+                                                    <Ionicons name="game-controller-outline" size={16} color={theme.accentLight} />
+                                                )}
+                                            </View>
+
+                                            {/* Info */}
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={{ color: theme.textPrimary, fontSize: 13, fontWeight: "800", letterSpacing: 0.3 }}>
+                                                    {gp.gameName}
+                                                </Text>
+                                                <Text style={{ color: theme.green, fontSize: 10, fontWeight: "700", marginTop: 2 }}>
+                                                    {gp.playerId ?? "Linked"}
+                                                    {gp.rank ? ` · ${gp.rank}` : ""}
+                                                </Text>
+                                                {stats?.clan && (
+                                                    <Text style={{ color: theme.textMuted, fontSize: 9, marginTop: 1 }}>
+                                                        {stats.clan}
+                                                    </Text>
+                                                )}
+                                            </View>
+
+                                            {/* Trophy stats */}
+                                            {(stats?.trophies !== undefined || stats?.bestTrophies !== undefined) && (
+                                                <View style={{ alignItems: "flex-end", gap: 4 }}>
+                                                    {stats?.trophies !== undefined && (
+                                                        <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                                                            <Ionicons name="trophy" size={11} color={theme.amber} />
+                                                            <Text style={{ color: theme.amber, fontSize: 12, fontWeight: "900" }}>
+                                                                {stats.trophies.toLocaleString()}
+                                                            </Text>
+                                                        </View>
+                                                    )}
+                                                    {stats?.bestTrophies !== undefined && (
+                                                        <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                                                            <Ionicons name="trophy-outline" size={10} color={theme.textMuted} />
+                                                            <Text style={{ color: theme.textMuted, fontSize: 10, fontWeight: "700" }}>
+                                                                {stats.bestTrophies.toLocaleString()} max
+                                                            </Text>
+                                                        </View>
+                                                    )}
+                                                </View>
+                                            )}
+                                        </View>
+                                    </Card>
+                                );
+                            })}
+                        </View>
                     </View>
                 )}
             </ScrollView>

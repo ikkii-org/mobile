@@ -103,6 +103,9 @@ export const usersAPI = {
     getProfile: (username: string) =>
         apiFetch<{ profile: PlayerProfile }>(`/users/${username}/profile`),
 
+    getGameProfiles: (username: string) =>
+        apiFetch<{ profiles: GameProfile[] }>(`/users/${username}/game-profiles`, {}, false),
+
     updatePfp: (username: string, data: UpdatePfpRequest) =>
         apiFetch<{ player: User }>(`/users/${username}/pfp`, {
             method: "PATCH",
