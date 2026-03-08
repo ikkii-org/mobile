@@ -100,7 +100,7 @@ export default function SignupScreen() {
                     </View>
 
                     {/* Form card */}
-                    <Card noPadding style={{
+                    <Card noPadding tabLabel="SIGN UP" style={{
                         backgroundColor: theme.bgGlass,
                         borderRadius: 20,
                         borderColor: theme.borderStrong,
@@ -108,130 +108,130 @@ export default function SignupScreen() {
                     }}>
                         <View style={{ padding: 20 }}>
 
-                        <Input
-                            label="Username"
-                            placeholder="e.g. crypto_king"
-                            value={username}
-                            onChangeText={setUsername}
-                            autoCapitalize="none"
-                            autoCorrect={false}
-                            error={errors.username}
-                        />
+                            <Input
+                                label="Username"
+                                placeholder="e.g. crypto_king"
+                                value={username}
+                                onChangeText={setUsername}
+                                autoCapitalize="none"
+                                autoCorrect={false}
+                                error={errors.username}
+                            />
 
-                        <Input
-                            label="Password"
-                            placeholder="Min 8 characters"
-                            value={password}
-                            onChangeText={setPassword}
-                            secureTextEntry
-                            error={errors.password}
-                        />
+                            <Input
+                                label="Password"
+                                placeholder="Min 8 characters"
+                                value={password}
+                                onChangeText={setPassword}
+                                secureTextEntry
+                                error={errors.password}
+                            />
 
-                        {/* Wallet connect row */}
-                        <View style={{ marginBottom: 14 }}>
-                            <Text style={{
-                                color: theme.textSecondary,
-                                fontSize: 10,
-                                fontWeight: "700",
-                                textTransform: "uppercase",
-                                letterSpacing: 2,
-                                marginBottom: 8,
-                                marginLeft: 2,
-                            }}>
-                                Solana Wallet
-                            </Text>
-                            <Pressable
-                                style={{
-                                    flexDirection: "row",
-                                    alignItems: "center",
-                                    borderWidth: 1,
-                                    borderRadius: 14,
-                                    paddingHorizontal: 14,
-                                    paddingVertical: 13,
-                                    backgroundColor: theme.bgInput,
-                                    borderColor: errors.walletKey
-                                        ? theme.red
-                                        : connected
-                                        ? theme.green + "40"
-                                        : theme.border,
-                                }}
-                                onPress={async () => {
-                                    if (!connected) {
-                                        await connect();
-                                    } else {
-                                        disconnect();
-                                    }
-                                }}
-                            >
-                                <View style={{
-                                    width: 32,
-                                    height: 32,
-                                    borderRadius: 16,
-                                    backgroundColor: connected ? theme.green + "20" : theme.bgMuted,
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    marginRight: 10,
-                                }}>
-                                    <Ionicons
-                                        name="wallet-outline"
-                                        size={16}
-                                        color={connected ? theme.green : theme.textMuted}
-                                    />
-                                </View>
-                                <Text
-                                    style={{
-                                        flex: 1,
-                                        fontSize: 13,
-                                        fontWeight: connected ? "600" : "400",
-                                        color: connected ? theme.textPrimary : theme.textMuted,
-                                    }}
-                                    numberOfLines={1}
-                                >
-                                    {connected && publicKey
-                                        ? publicKey.toBase58()
-                                        : "Connect Solana Wallet"}
-                                </Text>
-                                {connected ? (
-                                    <Text style={{ color: theme.red, fontSize: 10, fontWeight: "800", letterSpacing: 0.5, marginLeft: 8 }}>
-                                        DISCONNECT
-                                    </Text>
-                                ) : (
-                                    <Ionicons name="chevron-forward" size={14} color={theme.textMuted} />
-                                )}
-                            </Pressable>
-                            {errors.walletKey && (
+                            {/* Wallet connect row */}
+                            <View style={{ marginBottom: 14 }}>
                                 <Text style={{
-                                    color: theme.red,
+                                    color: theme.textSecondary,
                                     fontSize: 10,
                                     fontWeight: "700",
-                                    letterSpacing: 1,
                                     textTransform: "uppercase",
-                                    marginTop: 6,
-                                    marginLeft: 4,
+                                    letterSpacing: 2,
+                                    marginBottom: 8,
+                                    marginLeft: 2,
                                 }}>
-                                    {errors.walletKey}
+                                    Solana Wallet
                                 </Text>
-                            )}
-                        </View>
+                                <Pressable
+                                    style={{
+                                        flexDirection: "row",
+                                        alignItems: "center",
+                                        borderWidth: 1,
+                                        borderRadius: 14,
+                                        paddingHorizontal: 14,
+                                        paddingVertical: 13,
+                                        backgroundColor: theme.bgInput,
+                                        borderColor: errors.walletKey
+                                            ? theme.red
+                                            : connected
+                                                ? theme.green + "40"
+                                                : theme.border,
+                                    }}
+                                    onPress={async () => {
+                                        if (!connected) {
+                                            await connect();
+                                        } else {
+                                            disconnect();
+                                        }
+                                    }}
+                                >
+                                    <View style={{
+                                        width: 32,
+                                        height: 32,
+                                        borderRadius: 16,
+                                        backgroundColor: connected ? theme.green + "20" : theme.bgMuted,
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        marginRight: 10,
+                                    }}>
+                                        <Ionicons
+                                            name="wallet-outline"
+                                            size={16}
+                                            color={connected ? theme.green : theme.textMuted}
+                                        />
+                                    </View>
+                                    <Text
+                                        style={{
+                                            flex: 1,
+                                            fontSize: 13,
+                                            fontWeight: connected ? "600" : "400",
+                                            color: connected ? theme.textPrimary : theme.textMuted,
+                                        }}
+                                        numberOfLines={1}
+                                    >
+                                        {connected && publicKey
+                                            ? publicKey.toBase58()
+                                            : "Connect Solana Wallet"}
+                                    </Text>
+                                    {connected ? (
+                                        <Text style={{ color: theme.red, fontSize: 10, fontWeight: "800", letterSpacing: 0.5, marginLeft: 8 }}>
+                                            DISCONNECT
+                                        </Text>
+                                    ) : (
+                                        <Ionicons name="chevron-forward" size={14} color={theme.textMuted} />
+                                    )}
+                                </Pressable>
+                                {errors.walletKey && (
+                                    <Text style={{
+                                        color: theme.red,
+                                        fontSize: 10,
+                                        fontWeight: "700",
+                                        letterSpacing: 1,
+                                        textTransform: "uppercase",
+                                        marginTop: 6,
+                                        marginLeft: 4,
+                                    }}>
+                                        {errors.walletKey}
+                                    </Text>
+                                )}
+                            </View>
 
-                        <Input
-                            label="Profile Picture URL (Optional)"
-                            placeholder="https://..."
-                            value={pfp}
-                            onChangeText={setPfp}
-                            autoCapitalize="none"
-                            autoCorrect={false}
-                        />
-
-                        <View style={{ marginTop: 6 }}>
-                            <Button
-                                title="Create Account"
-                                onPress={handleSignup}
-                                loading={loading}
-                                size="lg"
-                                icon={<Ionicons name="flash" size={16} color={theme.textInverse} />}
+                            <Input
+                                label="Profile Picture URL (Optional)"
+                                placeholder="https://..."
+                                value={pfp}
+                                onChangeText={setPfp}
+                                autoCapitalize="none"
+                                autoCorrect={false}
                             />
-                        </View>
+
+                            <View style={{ marginTop: 6 }}>
+                                <Button
+                                    title="Create Account"
+                                    onPress={handleSignup}
+                                    loading={loading}
+                                    size="lg"
+                                    icon={<Ionicons name="flash" size={16} color={theme.textInverse} />}
+                                />
+                            </View>
                         </View>
                     </Card>
 

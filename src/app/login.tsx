@@ -93,7 +93,7 @@ export default function LoginScreen() {
                     </View>
 
                     {/* Form card */}
-                    <Card noPadding style={{
+                    <Card noPadding tabLabel="LOG IN" style={{
                         backgroundColor: theme.bgGlass,
                         borderRadius: 20,
                         borderColor: theme.borderStrong,
@@ -101,36 +101,36 @@ export default function LoginScreen() {
                     }}>
                         <View style={{ padding: 20 }}>
 
-                        <Input
-                            label="Username"
-                            placeholder="Enter your username"
-                            value={username}
-                            onChangeText={setUsername}
-                            autoCapitalize="none"
-                            autoCorrect={false}
-                            error={errors.username}
-                        />
+                            <Input
+                                label="Username"
+                                placeholder="Enter your username"
+                                value={username}
+                                onChangeText={setUsername}
+                                autoCapitalize="none"
+                                autoCorrect={false}
+                                error={errors.username}
+                            />
 
-                        <Input
-                            label="Password"
-                            placeholder="Enter your password"
-                            value={password}
-                            onChangeText={setPassword}
-                            secureTextEntry
-                            error={errors.password}
-                        />
+                            <Input
+                                label="Password"
+                                placeholder="Enter your password"
+                                value={password}
+                                onChangeText={setPassword}
+                                secureTextEntry
+                                error={errors.password}
+                            />
 
-                        <Pressable style={{ alignItems: "flex-end", marginBottom: 20, marginTop: -4 }}>
-                            <Text style={{ color: theme.textMuted, fontSize: 11 }}>Forgot password?</Text>
-                        </Pressable>
+                            <Pressable style={{ alignItems: "flex-end", marginBottom: 20, marginTop: -4 }}>
+                                <Text style={{ color: theme.textMuted, fontSize: 11 }}>Forgot password?</Text>
+                            </Pressable>
 
-                        <Button
-                            title="Log In"
-                            onPress={handleLogin}
-                            loading={loading}
-                            size="lg"
-                                                         icon={<Ionicons name="flash" size={16} color={theme.textInverse} />}
-                        />
+                            <Button
+                                title="Log In"
+                                onPress={handleLogin}
+                                loading={loading}
+                                size="lg"
+                                icon={<Ionicons name="flash" size={16} color={theme.textInverse} />}
+                            />
                         </View>
                     </Card>
 

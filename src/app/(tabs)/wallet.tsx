@@ -37,10 +37,10 @@ function formatBalance(val: string | number): string {
 
 function getTxIcon(type: string, theme: ThemeTokens): { icon: keyof typeof Ionicons.glyphMap; color: string; glow: string } {
     const map: Record<string, { icon: keyof typeof Ionicons.glyphMap; color: string; glow: string }> = {
-        STAKE:    { icon: "lock-closed", color: theme.amber,       glow: theme.amber + "30" },
-        REWARD:   { icon: "trophy",      color: theme.green,       glow: theme.greenGlow },
-        WITHDRAW: { icon: "arrow-up",    color: theme.red,         glow: theme.redGlow },
-        CLAIM:    { icon: "gift",        color: theme.accentLight, glow: theme.accentGlow },
+        STAKE: { icon: "lock-closed", color: theme.amber, glow: theme.amber + "30" },
+        REWARD: { icon: "trophy", color: theme.green, glow: theme.greenGlow },
+        WITHDRAW: { icon: "arrow-up", color: theme.red, glow: theme.redGlow },
+        CLAIM: { icon: "gift", color: theme.accentLight, glow: theme.accentGlow },
     };
     return map[type] ?? { icon: "help-circle", color: theme.grey, glow: "transparent" };
 }
@@ -385,6 +385,7 @@ export default function WalletScreen() {
                 {/* ═══ HERO: Ring Chart Dashboard ═══ */}
                 <Card
                     noPadding
+                    tabLabel="VAULT"
                     style={{
                         marginHorizontal: 20,
                         marginTop: 16,

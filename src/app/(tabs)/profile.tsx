@@ -220,6 +220,7 @@ export default function ProfileScreen() {
                 {/* ═══ PROFILE HERO BANNER ═══ */}
                 <Card
                     noPadding
+                    tabLabel="PROFILE"
                     style={{
                         backgroundColor: theme.bgGlass,
                         marginHorizontal: 20,
@@ -521,7 +522,7 @@ export default function ProfileScreen() {
                                 const isLive = game.status === "live";
                                 const isSyncing = syncingGame === game.name;
 
-                                    return (
+                                return (
                                     <Card
                                         key={game.name}
                                         noFill

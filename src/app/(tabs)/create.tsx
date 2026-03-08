@@ -193,7 +193,13 @@ export default function CreateDuelScreen() {
     const potentialWin = stakeAmount ? (parseFloat(stakeAmount) * 2).toFixed(2) : "0";
 
     const canAdvance = () => {
-        if (step === 0) return true;
+        if (step === 0) {
+            // If a game is selected (not "Custom Duel") and it's live, require a linked profile
+            if (selectedGame && selectedGame.status === "live" && !selectedGameProfile) {
+                return false;
+            }
+            return true;
+        }
         if (step === 1) {
             const amount = parseFloat(stakeAmount);
             return stakeAmount && !isNaN(amount) && amount > 0;
@@ -203,6 +209,12 @@ export default function CreateDuelScreen() {
     };
 
     const goNext = () => {
+        // Block advancing from game step if a live game is selected without a linked profile
+        if (step === 0 && selectedGame && selectedGame.status === "live" && !selectedGameProfile) {
+            showToast("Link your game in profile first", "error");
+            router.push("/(tabs)/profile");
+            return;
+        }
         if (step < STEPS.length - 1) setStep(step + 1);
     };
     const goBack = () => {
@@ -719,8 +731,8 @@ export default function CreateDuelScreen() {
                                                 </Pressable>
                                             );
                                         })}
-                        </View>
-                    </View>
+                                    </View>
+                                </View>
                             )}
 
                             {/* ── Step 4: Confirm ── */}
