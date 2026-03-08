@@ -53,6 +53,10 @@ export interface GameProfile {
 export interface LinkGameAccountRequest {
     gameName: string;
     playerId: string;
+    /** CR only — career total wins (verified with ±5 tolerance) */
+    claimedWins?: number;
+    /** CR only — personal best challenge wins (exact match) */
+    claimedChallengeMaxWins?: number;
 }
 
 export interface SyncGameProfileRequest {

@@ -35,6 +35,8 @@ export default function ProfileScreen() {
     const [showLinkModal, setShowLinkModal] = useState(false);
     const [linkGameName, setLinkGameName] = useState("");
     const [linkPlayerId, setLinkPlayerId] = useState("");
+    const [linkClaimedWins, setLinkClaimedWins] = useState("");
+    const [linkClaimedChallengeMaxWins, setLinkClaimedChallengeMaxWins] = useState("");
     const [linkLoading, setLinkLoading] = useState(false);
     const [syncingGame, setSyncingGame] = useState<string | null>(null);
 
@@ -121,18 +123,46 @@ export default function ProfileScreen() {
     const handleOpenLinkModal = (gameName: string) => {
         setLinkGameName(gameName);
         setLinkPlayerId("");
+        setLinkClaimedWins("");
+        setLinkClaimedChallengeMaxWins("");
         setShowLinkModal(true);
     };
 
     const handleLinkGame = async () => {
         const trimmed = linkPlayerId.trim();
         if (!trimmed) { showToast("Please enter your player ID", "error"); return; }
+
+        // Clash Royale requires the two ownership-verification fields
+        const isCR = linkGameName === "Clash Royale";
+        let claimedWins: number | undefined;
+        let claimedChallengeMaxWins: number | undefined;
+        if (isCR) {
+            const winsRaw = linkClaimedWins.trim();
+            const challengeRaw = linkClaimedChallengeMaxWins.trim();
+            if (!winsRaw || !challengeRaw) {
+                showToast("Please fill in both verification fields", "error");
+                return;
+            }
+            claimedWins = parseInt(winsRaw, 10);
+            claimedChallengeMaxWins = parseInt(challengeRaw, 10);
+            if (isNaN(claimedWins) || isNaN(claimedChallengeMaxWins)) {
+                showToast("Wins must be whole numbers", "error");
+                return;
+            }
+        }
+
         setLinkLoading(true);
         try {
-            await gameProfileAPI.link({ gameName: linkGameName, playerId: trimmed });
+            await gameProfileAPI.link({
+                gameName: linkGameName,
+                playerId: trimmed,
+                ...(isCR && { claimedWins, claimedChallengeMaxWins }),
+            });
             showToast(`${linkGameName} account linked!`, "success");
             setShowLinkModal(false);
             setLinkPlayerId("");
+            setLinkClaimedWins("");
+            setLinkClaimedChallengeMaxWins("");
             // Fetch only the updated profile instead of re-fetching all
             const { profile: updated } = await gameProfileAPI.getByGame(linkGameName);
             setGameProfiles((prev) => {
@@ -683,7 +713,12 @@ export default function ProfileScreen() {
             {/* Link Game Account Modal */}
             <Modal
                 visible={showLinkModal}
-                onClose={() => { setShowLinkModal(false); setLinkPlayerId(""); }}
+                onClose={() => {
+                    setShowLinkModal(false);
+                    setLinkPlayerId("");
+                    setLinkClaimedWins("");
+                    setLinkClaimedChallengeMaxWins("");
+                }}
                 title={`Link ${linkGameName}`}
                 confirmText={getLinkedProfile(linkGameName) ? "Update" : "Link Account"}
                 onConfirm={handleLinkGame}
@@ -702,6 +737,53 @@ export default function ProfileScreen() {
                     onChangeText={setLinkPlayerId}
                     autoCapitalize="none"
                 />
+
+                {/* Clash Royale — ownership verification fields */}
+                {linkGameName === "Clash Royale" && (
+                    <View style={{ marginTop: 4 }}>
+                        {/* Amber info banner */}
+                        <View style={{
+                            flexDirection: "row",
+                            alignItems: "flex-start",
+                            backgroundColor: theme.amber + "15",
+                            borderWidth: 1,
+                            borderColor: theme.amber + "40",
+                            borderRadius: 10,
+                            padding: 10,
+                            marginBottom: 14,
+                            gap: 8,
+                        }}>
+                            <Ionicons name="information-circle-outline" size={15} color={theme.amber} style={{ marginTop: 1 }} />
+                            <Text style={{ flex: 1, color: theme.amber, fontSize: 11, lineHeight: 16 }}>
+                                To verify ownership, answer two quick questions from your{" "}
+                                <Text style={{ fontWeight: "800" }}>in-game Stats page</Text>.
+                                Only account owners can see these values.
+                            </Text>
+                        </View>
+
+                        <Input
+                            label="Career Wins"
+                            placeholder="e.g. 3420"
+                            value={linkClaimedWins}
+                            onChangeText={setLinkClaimedWins}
+                            keyboardType="number-pad"
+                        />
+                        <Text style={{ color: theme.textMuted, fontSize: 10, marginTop: -10, marginBottom: 14, marginLeft: 2 }}>
+                            Found on your Profile → Stats page
+                        </Text>
+
+                        <Input
+                            label="Challenge Max Wins (personal best)"
+                            placeholder="e.g. 12"
+                            value={linkClaimedChallengeMaxWins}
+                            onChangeText={setLinkClaimedChallengeMaxWins}
+                            keyboardType="number-pad"
+                        />
+                        <Text style={{ color: theme.textMuted, fontSize: 10, marginTop: -10, marginLeft: 2 }}>
+                            Found on your Profile → Stats → Challenge
+                        </Text>
+                    </View>
+                )}
             </Modal>
         </View>
     );
