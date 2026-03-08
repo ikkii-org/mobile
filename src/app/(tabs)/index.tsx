@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, RefreshControl, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
@@ -10,8 +10,8 @@ import { Card } from "../../components/ui/Card";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
-import { duelsAPI } from "../../services/api";
-import type { Duel } from "../../types";
+import { duelsAPI, gamesAPI } from "../../services/api";
+import type { Duel, Game } from "../../types";
 
 /** Reusable futuristic section header */
 function SectionHeader({ label, count, color, theme }: {
@@ -72,16 +72,19 @@ export default function HomeScreen() {
     const [activeDuels, setActiveDuels] = useState<Duel[]>([]);
     const [disputedDuels, setDisputedDuels] = useState<Duel[]>([]);
     const [settledDuels, setSettledDuels] = useState<Duel[]>([]);
+    const [games, setGames] = useState<Game[]>([]);
+    const [searchQuery, setSearchQuery] = useState("");
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
 
     const fetchDuels = useCallback(async () => {
         try {
-            const [open, active, disputed, settled] = await Promise.all([
+            const [open, active, disputed, settled, gamesData] = await Promise.all([
                 duelsAPI.getByStatus("OPEN"),
                 duelsAPI.getByStatus("ACTIVE"),
                 duelsAPI.getByStatus("DISPUTED"),
                 duelsAPI.getByStatus("SETTLED"),
+                gamesAPI.getAll().catch(() => ({ games: [] })),
             ]);
             setOpenDuels(open.duels);
             setActiveDuels(
@@ -91,6 +94,7 @@ export default function HomeScreen() {
             );
             setDisputedDuels(disputed.duels);
             setSettledDuels(settled.duels);
+            setGames(gamesData.games);
         } catch (err) {
             console.error("Failed to fetch duels:", err);
         } finally {
@@ -105,7 +109,20 @@ export default function HomeScreen() {
 
     const onRefresh = () => { setRefreshing(true); fetchDuels(); };
 
+    const filterDuels = useCallback((duels: Duel[]) => {
+        if (!searchQuery) return duels;
+        const query = searchQuery.toLowerCase().trim();
+        return duels.filter((duel) => {
+            const p1 = duel.player1Username.toLowerCase();
+            const p2 = duel.player2Username?.toLowerCase() || "";
+            const winner = duel.winnerUsername?.toLowerCase() || "";
+            return p1.includes(query) || p2.includes(query) || winner.includes(query);
+        });
+    }, [searchQuery]);
+
     const liveDuels = [...activeDuels, ...disputedDuels];
+    const filteredOpenDuels = filterDuels(openDuels);
+    const filteredSettledDuels = filterDuels(settledDuels);
 
     if (loading) {
         return (
@@ -192,7 +209,44 @@ export default function HomeScreen() {
                     </View>
                 </View>
 
-
+                {/* ═══ SEARCH & FILTER ═══ */}
+                <View style={{ paddingHorizontal: 20, marginTop: 16 }}>
+                    <View style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        backgroundColor: theme.bgInput,
+                        borderWidth: 1,
+                        borderColor: theme.border,
+                        borderRadius: 12,
+                        paddingHorizontal: 12,
+                        height: 48,
+                    }}>
+                        <Ionicons name="search" size={20} color={theme.textMuted} />
+                        <TextInput
+                            style={{
+                                flex: 1,
+                                height: "100%",
+                                color: theme.textPrimary,
+                                fontSize: 14,
+                                marginLeft: 10,
+                            }}
+                            placeholder="Search by username..."
+                            placeholderTextColor={theme.textMuted}
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                        />
+                        {searchQuery.length > 0 && (
+                            <Ionicons
+                                name="close-circle"
+                                size={20}
+                                color={theme.textMuted}
+                                onPress={() => setSearchQuery("")}
+                            />
+                        )}
+                    </View>
+                </View>
 
                 {/* ═══ LIVE DUELS CAROUSEL ═══ */}
                 {liveDuels.length > 0 && (
@@ -216,6 +270,7 @@ export default function HomeScreen() {
                                 <View style={{ paddingRight: 10 }}>
                                     <DuelCard
                                         duel={item}
+                                        games={games}
                                         currentUsername={currentUser}
                                         onPress={() => router.push(`/duel/${item.id}`)}
                                         onAction={() => router.push(`/duel/${item.id}`)}
@@ -231,17 +286,18 @@ export default function HomeScreen() {
                 <View style={{ marginTop: 22, paddingHorizontal: 20 }}>
                     <SectionHeader
                         label="Open Challenges"
-                        count={openDuels.length}
+                        count={filteredOpenDuels.length}
                         color={theme.blue}
                         theme={theme}
                     />
 
-                    {openDuels.length > 0 ? (
+                    {filteredOpenDuels.length > 0 ? (
                         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
-                            {openDuels.map((duel) => (
+                            {filteredOpenDuels.map((duel) => (
                                 <View key={duel.id} style={{ width: "48%", marginBottom: 10 }}>
                                     <DuelCard
                                         duel={duel}
+                                        games={games}
                                         currentUsername={currentUser}
                                         onPress={() => router.push(`/duel/${duel.id}`)}
                                         onAction={() => router.push(`/duel/${duel.id}`)}
@@ -263,16 +319,17 @@ export default function HomeScreen() {
                 <View style={{ marginTop: 22, paddingHorizontal: 20 }}>
                     <SectionHeader
                         label="Recent Results"
-                        count={settledDuels.length}
+                        count={filteredSettledDuels.length}
                         color={theme.amber}
                         theme={theme}
                     />
 
-                    {settledDuels.length > 0 ? (
-                        settledDuels.map((duel) => (
+                    {filteredSettledDuels.length > 0 ? (
+                        filteredSettledDuels.map((duel) => (
                             <View key={duel.id} style={{ marginBottom: 12 }}>
                                 <DuelCard
                                     duel={duel}
+                                    games={games}
                                     currentUsername={currentUser}
                                     onPress={() => router.push(`/duel/${duel.id}`)}
                                     variant="full"

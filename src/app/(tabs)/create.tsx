@@ -294,34 +294,6 @@ export default function CreateDuelScreen() {
                             </React.Fragment>
                         ))}
                     </View>
-                    {/* Step labels */}
-                    <View style={{ position: "relative", height: 16, marginTop: 6, width: "100%" }}>
-                        {STEPS.map((s, i) => (
-                            <View
-                                key={s.key}
-                                style={{
-                                    position: "absolute",
-                                    left: i === 0 ? 0 : i === STEPS.length - 1 ? undefined : `${(i / (STEPS.length - 1)) * 100}%`,
-                                    right: i === STEPS.length - 1 ? 0 : undefined,
-                                    transform: i !== 0 && i !== STEPS.length - 1 ? [{ translateX: -50 }] : [],
-                                    width: 60,
-                                    alignItems: i === 0 ? "flex-start" : i === STEPS.length - 1 ? "flex-end" : "center",
-                                }}
-                            >
-                                <Text
-                                    style={{
-                                        fontSize: 8,
-                                        fontWeight: i === step ? "900" : "600",
-                                        color: i <= step ? theme.accent : theme.textMuted,
-                                        letterSpacing: 1,
-                                        textTransform: "uppercase",
-                                    }}
-                                >
-                                    {s.label}
-                                </Text>
-                            </View>
-                        ))}
-                    </View>
                 </View>
 
                 {/* ═══ STEP CONTENT ═══ */}

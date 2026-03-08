@@ -13,7 +13,7 @@ import { useToast } from "../../contexts/ToastContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { COMMON_TOKENS, DUEL_POLL_INTERVAL_MS, SUPPORTED_GAMES } from "../../constants";
-import { duelsAPI, verificationAPI, gameProfileAPI, usersAPI, escrowAPI } from "../../services/api";
+import { duelsAPI, verificationAPI, gameProfileAPI, usersAPI, escrowAPI, gamesAPI } from "../../services/api";
 import type { Duel, GameProfile, User } from "../../types";
 import { useWallet } from "../../components/WalletProvider";
 import { transact, Web3MobileWallet } from "@solana-mobile/mobile-wallet-adapter-protocol-web3js";
@@ -67,6 +67,7 @@ export default function DuelDetailScreen() {
     const [showResultModal, setShowResultModal] = useState(false);
     const [timeLeft, setTimeLeft] = useState("");
     const [linkedProfiles, setLinkedProfiles] = useState<GameProfile[]>([]);
+    const [games, setGames] = useState<import("../../types").Game[]>([]);
     const [player1Data, setPlayer1Data] = useState<User | null>(null);
     const [player2Data, setPlayer2Data] = useState<User | null>(null);
 
@@ -91,11 +92,15 @@ export default function DuelDetailScreen() {
         return () => clearInterval(interval);
     }, [fetchDuel]);
 
-    // Fetch linked game profiles to resolve game names
+    // Fetch linked game profiles and global games to resolve game names
     useEffect(() => {
         gameProfileAPI.getAll()
             .then((res) => setLinkedProfiles(res.profiles))
             .catch((err) => console.warn("Failed to fetch game profiles:", err));
+
+        gamesAPI.getAll()
+            .then((res) => setGames(res.games))
+            .catch((err) => console.warn("Games API not available on production yet:", err));
     }, []);
 
     // Fetch player data for avatars (pfp)
@@ -189,6 +194,10 @@ export default function DuelDetailScreen() {
     // Resolve game name from duel's gameId
     const duelGameName = (() => {
         if (!duel.gameId) return null;
+
+        const dbGame = games.find((g) => g.id === duel.gameId);
+        if (dbGame) return dbGame.name;
+
         const fromProfile = linkedProfiles.find((p) => p.gameId === duel.gameId);
         if (fromProfile) return fromProfile.gameName;
         // Fallback: no match found (user might not have that game linked)

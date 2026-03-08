@@ -4,11 +4,13 @@ import { Ionicons } from "@expo/vector-icons";
 import type { Duel } from "../types";
 import { Avatar } from "./ui/Avatar";
 import { COMMON_TOKENS, SUPPORTED_GAMES } from "../constants";
+import { GAME_ICONS } from "../assets/games";
 import { useTheme } from "../contexts/ThemeContext";
 
 interface DuelCardProps {
     duel: Duel;
     currentUsername?: string;
+    games?: import("../types").Game[];
     onPress: () => void;
     onAction?: () => void;
     /** "compact" for horizontal carousel cards, "full" for list/detail cards */
@@ -61,7 +63,7 @@ const STATUS_LABEL: Record<string, string> = {
     CANCELLED: "VOID",
 };
 
-export function DuelCard({ duel, currentUsername, onPress, onAction, variant = "full" }: DuelCardProps) {
+export function DuelCard({ duel, currentUsername, games, onPress, onAction, variant = "full" }: DuelCardProps) {
     const theme = useTheme();
     const [timeLeft, setTimeLeft] = useState(getTimeRemaining(duel.expiresAt));
 
@@ -70,7 +72,7 @@ export function DuelCard({ duel, currentUsername, onPress, onAction, variant = "
     const displayUser = isMyDuel ? (opponent ?? null) : duel.player1Username;
     const tokenSymbol = getTokenSymbol(duel.tokenMint);
     const isWin = duel.status === "SETTLED" && duel.winnerUsername === currentUsername;
-    const isLoss = duel.status === "SETTLED" && duel.winnerUsername !== currentUsername && duel.winnerUsername !== null;
+    const isLoss = isMyDuel && duel.status === "SETTLED" && duel.winnerUsername !== currentUsername && duel.winnerUsername !== null;
     const isOpen = duel.status === "OPEN" && duel.player1Username !== currentUsername;
     const isActive = duel.status === "ACTIVE";
 
@@ -85,7 +87,14 @@ export function DuelCard({ duel, currentUsername, onPress, onAction, variant = "
         return () => clearInterval(interval);
     }, [duel.expiresAt, duel.status]);
 
-    const linkedGame = duel.gameId ? SUPPORTED_GAMES.find((g) => g.name === duel.gameId) : null;
+    const dbGame = games?.find((g) => g.id === duel.gameId);
+
+    // If no gameId, it's a generic custom wager. Otherwise fallback to the DB name (or Clash Royale for the demo).
+    const gameName = !duel.gameId
+        ? "Custom Game"
+        : (dbGame?.name || "Clash Royale");
+
+    const linkedGame = gameName ? SUPPORTED_GAMES.find((g) => g.name === gameName) : null;
 
     // ─── COMPACT VARIANT ─── (carousel / grid — fixed width, vertical)
     if (variant === "compact") {
@@ -142,12 +151,22 @@ export function DuelCard({ duel, currentUsername, onPress, onAction, variant = "
 
                     {/* Hero stake amount */}
                     <View style={{ alignItems: "center", marginBottom: 10 }}>
-                        {linkedGame && (
+                        {gameName && GAME_ICONS[gameName] ? (
+                            <Image
+                                source={GAME_ICONS[gameName]}
+                                style={{ width: 16, height: 16, marginBottom: 4 }}
+                                resizeMode="contain"
+                            />
+                        ) : linkedGame ? (
                             <Image
                                 source={{ uri: linkedGame.icon }}
                                 style={{ width: 16, height: 16, marginBottom: 4 }}
                                 resizeMode="contain"
                             />
+                        ) : (
+                            <Text style={{ color: theme.textSecondary, fontSize: 8, fontWeight: "800", letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 2 }}>
+                                {gameName}
+                            </Text>
                         )}
                         <Text style={{
                             color: theme.textPrimary,
@@ -266,8 +285,47 @@ export function DuelCard({ duel, currentUsername, onPress, onAction, variant = "
                 <View style={{ width: 3, backgroundColor: accentColor, borderTopLeftRadius: 12, borderBottomLeftRadius: 12 }} />
 
                 <View style={{ flex: 1, padding: 12 }}>
-                    {/* Top row */}
-                    {isActive && duel.player2Username ? (
+                    {/* Game & Status Row */}
+                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                            {gameName && GAME_ICONS[gameName] ? (
+                                <Image
+                                    source={GAME_ICONS[gameName]}
+                                    style={{ width: 14, height: 14 }}
+                                    resizeMode="contain"
+                                />
+                            ) : linkedGame && (
+                                <Image
+                                    source={{ uri: linkedGame.icon }}
+                                    style={{ width: 14, height: 14 }}
+                                    resizeMode="contain"
+                                />
+                            )}
+                            <Text style={{ color: theme.textSecondary, fontSize: 10, fontWeight: "800", letterSpacing: 0.5, textTransform: "uppercase" }}>
+                                {gameName}
+                            </Text>
+                        </View>
+                        {/* Status chip */}
+                        <View style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 4,
+                            backgroundColor: accentColor + "10",
+                            borderWidth: 1,
+                            borderColor: accentColor + "30",
+                            borderRadius: 5,
+                            paddingHorizontal: 7,
+                            paddingVertical: 3,
+                        }}>
+                            <View style={{ width: 4, height: 4, borderRadius: 1, backgroundColor: accentColor }} />
+                            <Text style={{ color: accentColor, fontSize: 8, fontWeight: "900", letterSpacing: 1.2 }}>
+                                {statusLabel}
+                            </Text>
+                        </View>
+                    </View>
+
+                    {/* Players row */}
+                    {duel.player2Username ? (
                         /* P1 vs P2 row */
                         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
                             <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 7 }}>
@@ -310,49 +368,17 @@ export function DuelCard({ duel, currentUsername, onPress, onAction, variant = "
                         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
                             <Avatar username={displayUser ?? duel.player1Username} size="xs" />
                             <View style={{ flex: 1, marginLeft: 8 }}>
-                                <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                                    {linkedGame && (
-                                        <Image
-                                            source={{ uri: linkedGame.icon }}
-                                            style={{ width: 12, height: 12 }}
-                                            resizeMode="contain"
-                                        />
-                                    )}
-                                    <Text
-                                        style={{ color: theme.textPrimary, fontWeight: "700", fontSize: 13, letterSpacing: 0.2 }}
-                                        numberOfLines={1}
-                                    >
-                                        {isMyDuel ? (displayUser ?? "Waiting...") : duel.player1Username}
-                                    </Text>
-                                </View>
+                                <Text
+                                    style={{ color: theme.textPrimary, fontWeight: "700", fontSize: 13, letterSpacing: 0.2 }}
+                                    numberOfLines={1}
+                                >
+                                    {isMyDuel ? (displayUser ?? "Waiting...") : duel.player1Username}
+                                </Text>
                                 {!isMyDuel && !duel.player2Username && (
                                     <Text style={{ color: theme.textMuted, fontSize: 9, marginTop: 1, letterSpacing: 0.3 }}>
                                         Open challenge
                                     </Text>
                                 )}
-                            </View>
-
-                            {/* Status chip */}
-                            <View style={{
-                                flexDirection: "row",
-                                alignItems: "center",
-                                gap: 4,
-                                backgroundColor: accentColor + "10",
-                                borderWidth: 1,
-                                borderColor: accentColor + "30",
-                                borderRadius: 5,
-                                paddingHorizontal: 7,
-                                paddingVertical: 3,
-                            }}>
-                                <View style={{
-                                    width: 4,
-                                    height: 4,
-                                    borderRadius: 1,
-                                    backgroundColor: accentColor,
-                                }} />
-                                <Text style={{ color: accentColor, fontSize: 8, fontWeight: "900", letterSpacing: 1.2 }}>
-                                    {statusLabel}
-                                </Text>
                             </View>
                         </View>
                     )}

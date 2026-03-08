@@ -19,6 +19,7 @@ import type {
     User,
     Wallet,
     WithdrawRequest,
+    Game,
 } from "../types";
 
 // ─── Token Storage (set by AuthContext) ──────────────────────────────────────
@@ -246,6 +247,12 @@ export const gameProfileAPI = {
             method: "POST",
             body: JSON.stringify(data),
         }),
+};
+
+// ─── Games ───────────────────────────────────────────────────────────────────
+
+export const gamesAPI = {
+    getAll: () => apiFetch<{ games: Game[] }>("/games", {}, false),
 };
 
 // ─── Health ──────────────────────────────────────────────────────────────────
