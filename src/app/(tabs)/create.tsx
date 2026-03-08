@@ -780,6 +780,7 @@ export default function CreateDuelScreen() {
                                     title="Back"
                                     onPress={goBack}
                                     variant="secondary"
+                                    size={step === STEPS.length - 1 ? "lg" : "md"}
                                     icon={<Ionicons name="arrow-back" size={14} color={theme.accentLight} />}
                                 />
                             </View>
