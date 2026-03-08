@@ -39,7 +39,7 @@ function getTokenDecimals(symbol: string): number {
 const STEPS = [
     { key: "game", label: "Game", icon: "game-controller-outline" as keyof typeof Ionicons.glyphMap },
     { key: "stake", label: "Stake", icon: "cash-outline" as keyof typeof Ionicons.glyphMap },
-    { key: "token", label: "Token", icon: "logo-bitcoin" as keyof typeof Ionicons.glyphMap },
+    { key: "token", label: "Token", icon: "custom-sol" as any },
     { key: "timer", label: "Duration", icon: "time-outline" as keyof typeof Ionicons.glyphMap },
     { key: "confirm", label: "Confirm", icon: "checkmark-circle-outline" as keyof typeof Ionicons.glyphMap },
 ] as const;
@@ -271,6 +271,12 @@ export default function CreateDuelScreen() {
                                 >
                                     {i < step ? (
                                         <Ionicons name="checkmark" size={13} color={theme.textInverse} />
+                                    ) : s.icon === "custom-sol" ? (
+                                        <Image
+                                            source={require("../../../assets/sol.png")}
+                                            style={{ width: 14, height: 14, tintColor: i === step ? theme.textInverse : theme.textMuted }}
+                                            resizeMode="contain"
+                                        />
                                     ) : (
                                         <Ionicons name={s.icon} size={12} color={i === step ? theme.textInverse : theme.textMuted} />
                                     )}

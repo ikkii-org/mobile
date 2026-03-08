@@ -192,52 +192,7 @@ export default function HomeScreen() {
                     </View>
                 </View>
 
-                {/* ═══ STATS ROW ═══ */}
-                <View style={{ flexDirection: "row", gap: 8, paddingHorizontal: 20, marginTop: 16, marginBottom: 6 }}>
-                    {[
-                        { label: "OPEN", value: openDuels.length, icon: "radio-button-on" as keyof typeof Ionicons.glyphMap, color: theme.blue },
-                        { label: "LIVE", value: liveDuels.length, icon: "flash" as keyof typeof Ionicons.glyphMap, color: theme.green },
-                        { label: "SETTLED", value: settledDuels.length, icon: "checkmark-circle" as keyof typeof Ionicons.glyphMap, color: theme.amber },
-                    ].map((item) => (
-                        <Card
-                            key={item.label}
-                            noFill
-                            noPadding
-                            style={{
-                                flex: 1,
-                                borderRadius: 10,
-                                paddingVertical: 12,
-                                paddingHorizontal: 8,
-                                alignItems: "center",
-                            }}
-                        >
-                            {/* Top neon line indicator */}
-                            <View style={{
-                                position: "absolute",
-                                top: 0,
-                                left: 12,
-                                right: 12,
-                                height: 2,
-                                backgroundColor: item.color,
-                                borderBottomLeftRadius: 2,
-                                borderBottomRightRadius: 2,
-                            }} />
-                            <Text style={{ color: item.color, fontSize: 22, fontWeight: "900", letterSpacing: -1 }}>
-                                {item.value}
-                            </Text>
-                            <Text style={{
-                                color: theme.textMuted,
-                                fontSize: 8,
-                                fontWeight: "800",
-                                letterSpacing: 2,
-                                textTransform: "uppercase",
-                                marginTop: 3,
-                            }}>
-                                {item.label}
-                            </Text>
-                        </Card>
-                    ))}
-                </View>
+
 
                 {/* ═══ LIVE DUELS CAROUSEL ═══ */}
                 {liveDuels.length > 0 && (
