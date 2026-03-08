@@ -2,7 +2,7 @@ import type { DuelStatus } from "./types";
 
 // ─── API ─────────────────────────────────────────────────────────────────────
 
-export const API_BASE_URL = "http://100.52.202.154:3000/api/v1";
+export const API_BASE_URL = "https://server.ikkii.app/api/v1";
 
 // ─── Solana / Escrow ─────────────────────────────────────────────────────────
 
