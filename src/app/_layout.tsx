@@ -5,6 +5,7 @@ import { WalletProvider } from "../components/WalletProvider";
 import { ToastProvider } from "../contexts/ToastContext";
 import { AuthProvider } from "../contexts/AuthContext";
 import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
+import { SplashAnimation } from "../components/SplashAnimation";
 
 function ThemedStack() {
   const theme = useTheme();
@@ -33,7 +34,9 @@ export default function RootLayout() {
       <AuthProvider>
         <WalletProvider>
           <ToastProvider>
-            <ThemedStack />
+            <SplashAnimation>
+              <ThemedStack />
+            </SplashAnimation>
           </ToastProvider>
         </WalletProvider>
       </AuthProvider>
