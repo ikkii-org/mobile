@@ -25,12 +25,12 @@ import { COMMON_TOKENS, EXPIRATION_PRESETS, SUPPORTED_GAMES } from "../../consta
 import type { GameProfile } from "../../types";
 import { GAME_ICONS } from "../../assets/games";
 import { transact, Web3MobileWallet } from "@solana-mobile/mobile-wallet-adapter-protocol-web3js";
-import { Connection, PublicKey, Transaction, clusterApiUrl } from "@solana/web3.js";
+import { PublicKey, Transaction } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { buildCreateEscrowInstructions, isNativeSol } from "../../utils/ikkiEscrow";
+import { CONNECTION, withTimeout } from "../../utils/connection";
+import { getErrorMessage } from "../../utils/error";
 import * as Crypto from "expo-crypto";
-
-const CONNECTION = new Connection(clusterApiUrl("devnet"), "confirmed");
 
 function getTokenDecimals(symbol: string): number {
     if (symbol === "SOL") return 1_000_000_000;
@@ -162,15 +162,17 @@ export default function CreateDuelScreen() {
             if (!txSignature) throw new Error("Transaction failed or was rejected by wallet");
 
             showToast("Confirming transaction...", "info");
-            const confirmation = await CONNECTION.confirmTransaction(
-                { signature: txSignature, ...latestBlockhash }, "confirmed"
+            const confirmation = await withTimeout(
+                CONNECTION.confirmTransaction(
+                    { signature: txSignature, ...latestBlockhash },
+                    "confirmed"
+                ),
+                60_000,
+                "Transaction confirmation timed out. Check your wallet for status."
             );
             if (confirmation.value.err) {
                 throw new Error(`Transaction failed on-chain: ${JSON.stringify(confirmation.value.err)}`);
             }
-            // Record the stake on the vault
-            escrowAPI.recordTransaction(user.id, { type: "STAKE", amount: stakeAmt, duelId }).catch(() => { });
-
             const { duel } = await duelsAPI.create({
                 username: user.username,
                 stakeAmount: stakeAmt,
@@ -182,11 +184,15 @@ export default function CreateDuelScreen() {
                 duelId,
             });
 
+            // Record transaction AFTER duel exists in DB to satisfy the duel_id foreign key
+            escrowAPI.recordTransaction(user.id, { type: "STAKE", amount: stakeAmt, duelId: duel.id })
+                .catch((err) => console.error("[Escrow] Failed to record transaction:", err));
+
             showToast("Duel created! Waiting for opponent...", "success");
             router.push(`/duel/${duel.id}`);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Create error:", err);
-            showToast(err.message || "Failed to create duel", "error");
+            showToast(getErrorMessage(err, "Failed to create duel"), "error");
         } finally {
             setLoading(false);
         }

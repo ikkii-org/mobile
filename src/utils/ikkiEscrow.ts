@@ -27,8 +27,11 @@ export function isNativeSol(tokenMint: PublicKey): boolean {
  * Helper to convert UUID string to a 16-byte array for Anchor args
  */
 function uuidToUint8Array(uuidStr: string): Uint8Array {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(uuidStr)) {
+        throw new Error("Invalid UUID format");
+    }
     const hexStr = uuidStr.replace(/-/g, "");
-    if (hexStr.length !== 32) throw new Error("Invalid UUID length");
     const arr = new Uint8Array(16);
     for (let i = 0; i < 16; i++) {
         arr[i] = parseInt(hexStr.slice(i * 2, i * 2 + 2), 16);

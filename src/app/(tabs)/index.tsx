@@ -79,6 +79,7 @@ export default function HomeScreen() {
     const [refreshing, setRefreshing] = useState(false);
 
     const fetchDuels = useCallback(async () => {
+        let cancelled = false;
         try {
             const [open, active, disputed, settled, gamesData, lbData] = await Promise.all([
                 duelsAPI.getByStatus("OPEN"),
@@ -101,14 +102,19 @@ export default function HomeScreen() {
                     (d) => d.player1Username === currentUser || d.player2Username === currentUser
                 )
             );
+
             setDisputedDuels(disputed.duels);
             setSettledDuels(settled.duels);
             setGames(gamesData.games);
+
+            if (cancelled) return;
         } catch (err) {
             console.error("Failed to fetch duels:", err);
         } finally {
-            setLoading(false);
-            setRefreshing(false);
+            if (!cancelled) {
+                setLoading(false);
+                setRefreshing(false);
+            }
         }
     }, [currentUser]);
 

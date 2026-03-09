@@ -3,7 +3,7 @@ import { Pressable, RefreshControl, ScrollView, Text, View, ActivityIndicator } 
 import * as Clipboard from "expo-clipboard";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
-import { Connection, PublicKey, Transaction, clusterApiUrl } from "@solana/web3.js";
+import { PublicKey, Transaction } from "@solana/web3.js";
 import { transact, Web3MobileWallet } from "@solana-mobile/mobile-wallet-adapter-protocol-web3js";
 
 import { Button } from "../../components/ui/Button";
@@ -15,9 +15,8 @@ import { useWallet } from "../../components/WalletProvider";
 import { useTheme, ThemeTokens } from "../../contexts/ThemeContext";
 import { escrowAPI } from "../../services/api";
 import { buildUnwrapSolInstruction } from "../../utils/ikkiEscrow";
+import { CONNECTION } from "../../utils/connection";
 import type { Wallet, Transaction as TxType } from "../../types";
-
-const CONNECTION = new Connection(clusterApiUrl("devnet"), "confirmed");
 
 function formatBalance(val: string | number): string {
     const num = typeof val === "string" ? parseFloat(val) : val;

@@ -18,13 +18,13 @@ import { duelsAPI, verificationAPI, gameProfileAPI, usersAPI, escrowAPI, gamesAP
 import type { Duel, GameProfile, User } from "../../types";
 import { useWallet } from "../../components/WalletProvider";
 import { transact, Web3MobileWallet } from "@solana-mobile/mobile-wallet-adapter-protocol-web3js";
-import { Connection, PublicKey, Transaction, clusterApiUrl } from "@solana/web3.js";
+import { PublicKey, Transaction } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
-import { buildJoinEscrowInstructions, buildCancelEscrowInstructions, isNativeSol } from "../../utils/ikkiEscrow";
+import { buildJoinEscrowInstructions, buildCancelEscrowInstructions, buildUnwrapSolInstruction, isNativeSol } from "../../utils/ikkiEscrow";
+import { CONNECTION, withTimeout } from "../../utils/connection";
+import { getErrorMessage } from "../../utils/error";
 import { GAME_ICONS } from "../../assets/games";
 import { Image } from "react-native";
-
-const CONNECTION = new Connection(clusterApiUrl("devnet"), "confirmed");
 
 const STATUS_COLORS: Record<string, string> = {
     OPEN: "#3B82F6",
@@ -77,13 +77,14 @@ export default function DuelDetailScreen() {
     // Winner Prompt State
     const [showWinnerPrompt, setShowWinnerPrompt] = useState(false);
     const [hasClaimedSol, setHasClaimedSol] = useState(false);
+    const [verifyLoading, setVerifyLoading] = useState(false);
 
     const fetchDuel = useCallback(async () => {
         try {
             const res = await duelsAPI.getById(id);
             setDuel(res.duel);
-        } catch (err: any) {
-            console.error("Failed to fetch duel:", err);
+        } catch (err: unknown) {
+            console.error("Failed to fetch duel:", getErrorMessage(err));
         } finally {
             setLoading(false);
         }
@@ -289,15 +290,19 @@ export default function DuelDetailScreen() {
 
             if (!txSignature) throw new Error("Transaction failed or was rejected");
 
-            await CONNECTION.confirmTransaction({ signature: txSignature, ...latestBlockhash }, "confirmed");
+            await withTimeout(
+                CONNECTION.confirmTransaction({ signature: txSignature, ...latestBlockhash }, "confirmed"),
+                60_000,
+                "Transaction confirmation timed out"
+            );
             const res = await duelsAPI.join(duel.id, { username: currentUser, txSignature });
             setDuel(res.duel);
-            // Record the stake transaction on the vault
-            if (user) escrowAPI.recordTransaction(user.id, { type: "STAKE", amount: duel.stakeAmount, duelId: duel.id }).catch(() => { });
+            if (user) escrowAPI.recordTransaction(user.id, { type: "STAKE", amount: duel.stakeAmount, duelId: duel.id })
+                .catch((err) => console.error("[Escrow] Failed to record transaction:", err));
             showToast("Joined duel! Get ready to compete.", "success");
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Join error:", err);
-            showToast(err.message || "Failed to join duel", "error");
+            showToast(getErrorMessage(err, "Failed to join duel"), "error");
         } finally {
             setActionLoading(false);
         }
@@ -305,6 +310,23 @@ export default function DuelDetailScreen() {
 
     const handleCancel = async () => {
         if (!currentUser || !duel) return;
+
+        // Expired duels: the Solana program blocks cancel_escrow with error 6003 (EscrowExpired).
+        // Instead, the server authority calls claimExpired — no wallet tx needed.
+        if (new Date(duel.expiresAt) <= new Date()) {
+            setActionLoading(true);
+            try {
+                await duelsAPI.cancelExpired(duel.id);
+                showToast("Expired duel cancelled. Stake refunded.", "info");
+                router.back();
+            } catch (err: unknown) {
+                showToast(getErrorMessage(err, "Failed to cancel expired duel"), "error");
+            } finally {
+                setActionLoading(false);
+            }
+            return;
+        }
+
         if (!wallet.publicKey) {
             showToast("Please connect your wallet first", "error");
             return;
@@ -330,15 +352,19 @@ export default function DuelDetailScreen() {
 
             if (!txSignature) throw new Error("Cancel transaction failed or was rejected");
 
-            await CONNECTION.confirmTransaction({ signature: txSignature, ...latestBlockhash }, "confirmed");
+            await withTimeout(
+                CONNECTION.confirmTransaction({ signature: txSignature, ...latestBlockhash }, "confirmed"),
+                60_000,
+                "Transaction confirmation timed out"
+            );
             await duelsAPI.cancel(duel.id, { username: currentUser, txSignature });
-            // Record the refund transaction on the vault
-            if (user) escrowAPI.recordTransaction(user.id, { type: "STAKE", amount: -(duel.stakeAmount), duelId: duel.id }).catch(() => { });
+            if (user) escrowAPI.recordTransaction(user.id, { type: "STAKE", amount: -(duel.stakeAmount), duelId: duel.id })
+                .catch((err) => console.error("[Escrow] Failed to record transaction:", err));
             showToast("Duel cancelled", "info");
             router.back();
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Cancel error:", err);
-            showToast(err.message || "Failed to cancel duel", "error");
+            showToast(getErrorMessage(err, "Failed to cancel duel"), "error");
             setActionLoading(false);
         }
     };
@@ -357,40 +383,36 @@ export default function DuelDetailScreen() {
             if (res.resolved) {
                 showToast("Duel settled successfully!", "success");
             } else if (res.duel.status === "DISPUTED") {
-                showToast("Duel marked as disputed.", "info");
-            } else {
-                showToast("Result submitted. Waiting for opponent.", "success");
+                showToast("Result submitted! Awaiting opponent's submission.", "info");
             }
-        } catch (err: any) {
-            showToast(err.message || "Failed to submit result", "error");
+        } catch (err: unknown) {
+            showToast(getErrorMessage(err, "Failed to submit result"), "error");
         } finally {
             setActionLoading(false);
-            setShowResultModal(false);
         }
     };
 
     const handleVerify = async () => {
-        setActionLoading(true);
+        setVerifyLoading(true);
         try {
             const { result } = await verificationAPI.verify(duel.id);
             if (result.verified) {
                 showToast(`Verified! Winner: ${result.winnerUsername}`, "success");
             } else {
-                showToast(result.reason || "Could not auto-verify this duel", "info");
+                showToast(result.reason || "Could not auto-verify", "info");
             }
             fetchDuel();
-        } catch (err: any) {
-            showToast(err.message || "Failed to request verification", "error");
+        } catch (err: unknown) {
+            showToast(getErrorMessage(err, "Failed to request verification"), "error");
         } finally {
-            setActionLoading(false);
+            setVerifyLoading(false);
         }
     };
 
     const handleUnwrapSol = async () => {
-        if (!wallet.publicKey) return;
+        if (!wallet.publicKey || !user) return;
         setActionLoading(true);
         try {
-            const { buildUnwrapSolInstruction } = await import("../../utils/ikkiEscrow");
             const unwrapIx = buildUnwrapSolInstruction(wallet.publicKey, wallet.publicKey);
             const latestBlockhash = await CONNECTION.getLatestBlockhash();
             const tx = new Transaction({ feePayer: wallet.publicKey, ...latestBlockhash }).add(unwrapIx);
@@ -405,15 +427,19 @@ export default function DuelDetailScreen() {
                 txSignature = sig;
             });
 
-            await CONNECTION.confirmTransaction({ signature: txSignature, ...latestBlockhash }, "confirmed");
-            // Record the SOL claim on the vault
-            if (user) escrowAPI.recordTransaction(user.id, { type: "CLAIM", amount: 0, duelId: duel.id }).catch(() => { });
+            await withTimeout(
+                CONNECTION.confirmTransaction({ signature: txSignature, ...latestBlockhash }, "confirmed"),
+                60_000,
+                "Transaction confirmation timed out"
+            );
+            if (user) escrowAPI.recordTransaction(user.id, { type: "CLAIM", amount: 0, duelId: duel.id })
+                .catch((err) => console.error("[Escrow] Failed to record transaction:", err));
             setHasClaimedSol(true);
             await AsyncStorage.setItem(`@claimed_sol_${duel.id}`, "true");
             showToast("SOL claimed to your wallet!", "success");
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Unwrap SOL error:", err);
-            showToast(err.message || "Failed to claim SOL", "error");
+            showToast(getErrorMessage(err, "Failed to claim SOL"), "error");
         } finally {
             setActionLoading(false);
         }

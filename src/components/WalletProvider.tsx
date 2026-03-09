@@ -2,7 +2,7 @@ import {
     transact,
     Web3MobileWallet,
 } from "@solana-mobile/mobile-wallet-adapter-protocol-web3js";
-import { clusterApiUrl, Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import React, {
     createContext,
     useCallback,
@@ -14,10 +14,7 @@ import { Alert } from "react-native";
 import { getAssociatedTokenAddressSync, NATIVE_MINT } from "@solana/spl-token";
 import { useAuth } from "../contexts/AuthContext";
 import { COMMON_TOKENS } from "../constants";
-
-// ─── Connection ───────────────────────────────────────────────────────────────
-
-const CONNECTION = new Connection(clusterApiUrl("devnet"), "confirmed");
+import { CONNECTION } from "../utils/connection";
 
 // ─── App identity shown to wallets ───────────────────────────────────────────
 

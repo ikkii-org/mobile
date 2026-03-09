@@ -147,6 +147,12 @@ export const duelsAPI = {
             body: JSON.stringify(data),
         }),
 
+    // Server-side cancel for expired duels — no wallet tx needed
+    cancelExpired: (id: string) =>
+        apiFetch<{ duel: Duel }>(`/duels/${id}/cancel-expired`, {
+            method: "POST",
+        }),
+
     cleanup: () =>
         apiFetch<{ cancelledCount: number }>("/duels/cleanup", { method: "POST" }),
 };
