@@ -86,6 +86,7 @@ export interface Duel {
     txSignature: string | null;
     expiresAt: string;
     createdAt: string;
+    isNft: boolean;
 }
 
 // ─── Wallet / Escrow ─────────────────────────────────────────────────────────
@@ -156,6 +157,7 @@ export interface CreateDuelRequest {
     expiresInMs?: number;
     txSignature: string;
     duelId: string;
+    isNft?: boolean;
 }
 
 export interface JoinDuelRequest {

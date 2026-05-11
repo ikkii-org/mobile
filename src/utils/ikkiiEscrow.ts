@@ -15,6 +15,7 @@ import {
 import { Buffer } from "buffer";
 
 export const PROGRAM_ID = new PublicKey("7rP4rHKBqnYGB2UgpeRtd9f3FZ1PHwfc4iPVhWRv9UP4");
+export const PROGRAM_ID_V2 = new PublicKey("4T3bc2eimNKACT9FxTJaySC5jzqaBLct8Zo4BDjprnN2");
 
 /** The native SOL mint address (wrapped SOL) */
 export const WSOL_MINT = NATIVE_MINT; // So11111111111111111111111111111111111111112
@@ -53,6 +54,14 @@ function writeBigInt64LE(arr: Uint8Array, value: bigint, offset: number) {
  */
 const INSTRUCTION_DISCRIMINATORS = {
     createEscrow: new Uint8Array([253, 215, 165, 116, 36, 108, 68, 80]),
+    joinEscrow: new Uint8Array([205, 250, 117, 19, 126, 211, 205, 103]),
+    cancelEscrow: new Uint8Array([156, 203, 54, 179, 38, 72, 33, 21]),
+};
+
+// V2 discriminators (from v2 IDL)
+const INSTRUCTION_DISCRIMINATORS_V2 = {
+    createEscrow: new Uint8Array([253, 215, 165, 116, 36, 108, 68, 80]),
+    createNftEscrow: new Uint8Array([24, 136, 75, 139, 128, 218, 209, 33]),
     joinEscrow: new Uint8Array([205, 250, 117, 19, 126, 211, 205, 103]),
     cancelEscrow: new Uint8Array([156, 203, 54, 179, 38, 72, 33, 21]),
 };
@@ -118,18 +127,19 @@ export function buildCreateEscrowInstructions(
     stakeAmount: number,
     expiryMs: number,
     tokenMint: PublicKey,
-    player1PubKey: PublicKey
+    player1PubKey: PublicKey,
+    programId: PublicKey = PROGRAM_ID
 ): TransactionInstruction[] {
     const duelIdArr = uuidToUint8Array(duelId);
 
     // Get PDAs
     const [escrowPda] = PublicKey.findProgramAddressSync(
         [stringToUint8Array("escrow"), duelIdArr],
-        PROGRAM_ID
+        programId
     );
     const [vaultPda] = PublicKey.findProgramAddressSync(
         [stringToUint8Array("vault"), duelIdArr],
-        PROGRAM_ID
+        programId
     );
 
     // For native SOL, player's token account is their wSOL ATA
@@ -145,7 +155,7 @@ export function buildCreateEscrowInstructions(
     writeBigInt64LE(data, BigInt(expirySec), 32);
 
     const escrowIx = new TransactionInstruction({
-        programId: PROGRAM_ID,
+        programId,
         keys: [
             { pubkey: player1PubKey, isSigner: true, isWritable: true },
             { pubkey: escrowPda, isSigner: false, isWritable: true },
@@ -179,17 +189,18 @@ export function buildJoinEscrowInstructions(
     duelId: string,
     tokenMint: PublicKey,
     player2PubKey: PublicKey,
-    stakeAmountLamports?: number
+    stakeAmountLamports?: number,
+    programId: PublicKey = PROGRAM_ID
 ): TransactionInstruction[] {
     const duelIdArr = uuidToUint8Array(duelId);
 
     const [escrowPda] = PublicKey.findProgramAddressSync(
         [stringToUint8Array("escrow"), duelIdArr],
-        PROGRAM_ID
+        programId
     );
     const [vaultPda] = PublicKey.findProgramAddressSync(
         [stringToUint8Array("vault"), duelIdArr],
-        PROGRAM_ID
+        programId
     );
 
     const player2TokenAccount = getAssociatedTokenAddressSync(tokenMint, player2PubKey, false);
@@ -198,7 +209,7 @@ export function buildJoinEscrowInstructions(
     data.set(INSTRUCTION_DISCRIMINATORS.joinEscrow, 0);
 
     const joinIx = new TransactionInstruction({
-        programId: PROGRAM_ID,
+        programId,
         keys: [
             { pubkey: player2PubKey, isSigner: true, isWritable: true },
             { pubkey: escrowPda, isSigner: false, isWritable: true },
@@ -227,17 +238,18 @@ export function buildJoinEscrowInstructions(
 export function buildCancelEscrowInstructions(
     duelId: string,
     tokenMint: PublicKey,
-    player1PubKey: PublicKey
+    player1PubKey: PublicKey,
+    programId: PublicKey = PROGRAM_ID
 ): TransactionInstruction[] {
     const duelIdArr = uuidToUint8Array(duelId);
 
     const [escrowPda] = PublicKey.findProgramAddressSync(
         [stringToUint8Array("escrow"), duelIdArr],
-        PROGRAM_ID
+        programId
     );
     const [vaultPda] = PublicKey.findProgramAddressSync(
         [stringToUint8Array("vault"), duelIdArr],
-        PROGRAM_ID
+        programId
     );
 
     const player1TokenAccount = getAssociatedTokenAddressSync(tokenMint, player1PubKey, false);
@@ -246,7 +258,7 @@ export function buildCancelEscrowInstructions(
     data.set(INSTRUCTION_DISCRIMINATORS.cancelEscrow, 0);
 
     const cancelIx = new TransactionInstruction({
-        programId: PROGRAM_ID,
+        programId,
         keys: [
             { pubkey: player1PubKey, isSigner: true, isWritable: true },
             { pubkey: escrowPda, isSigner: false, isWritable: true },
@@ -306,4 +318,55 @@ export function buildCancelEscrowInstruction(
 ) {
     const ixs = buildCancelEscrowInstructions(duelId, tokenMint, player1PubKey);
     return ixs[0]; // first ix is always the cancel ix
+}
+
+/**
+ * Create NFT Escrow Instruction Builder (V2).
+ *
+ * Creates an escrow where the stake is an NFT (supply=1, decimals=0).
+ * Uses the v2 program which validates NFT properties on-chain.
+ */
+export function buildCreateNftEscrowInstructions(
+    duelId: string,
+    expiryMs: number,
+    tokenMint: PublicKey,
+    player1PubKey: PublicKey
+): TransactionInstruction[] {
+    const duelIdArr = uuidToUint8Array(duelId);
+
+    const [escrowPda] = PublicKey.findProgramAddressSync(
+        [stringToUint8Array("escrow"), duelIdArr],
+        PROGRAM_ID_V2
+    );
+    const [vaultPda] = PublicKey.findProgramAddressSync(
+        [stringToUint8Array("vault"), duelIdArr],
+        PROGRAM_ID_V2
+    );
+
+    const player1TokenAccount = getAssociatedTokenAddressSync(tokenMint, player1PubKey, false);
+
+    // Layout: discriminator(8) + duelId(16) + stakeAmount(8) + expiry(8)
+    // stakeAmount is forced to 1 for NFTs
+    const data = new Uint8Array(8 + 16 + 8 + 8);
+    data.set(INSTRUCTION_DISCRIMINATORS_V2.createNftEscrow, 0);
+    data.set(duelIdArr, 8);
+    writeBigInt64LE(data, BigInt(1), 24); // stake_amount = 1 for NFTs
+    const expirySec = Math.floor((Date.now() + expiryMs) / 1000);
+    writeBigInt64LE(data, BigInt(expirySec), 32);
+
+    const escrowIx = new TransactionInstruction({
+        programId: PROGRAM_ID_V2,
+        keys: [
+            { pubkey: player1PubKey, isSigner: true, isWritable: true },
+            { pubkey: escrowPda, isSigner: false, isWritable: true },
+            { pubkey: tokenMint, isSigner: false, isWritable: false },
+            { pubkey: player1TokenAccount, isSigner: false, isWritable: true },
+            { pubkey: vaultPda, isSigner: false, isWritable: true },
+            { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+            { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+        ],
+        data: Buffer.from(data),
+    });
+
+    return [escrowIx];
 }

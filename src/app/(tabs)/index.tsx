@@ -189,7 +189,7 @@ export default function HomeScreen() {
                                     fontWeight: "900",
                                     letterSpacing: 6,
                                 }}>
-                                    IKKII
+                                    IKKIII
                                 </Text>
                             </View>
                             <Text style={{

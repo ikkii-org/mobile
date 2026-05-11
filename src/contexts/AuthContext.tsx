@@ -36,8 +36,8 @@ const AuthContext = createContext<AuthContextState>({
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const TOKEN_KEY = "ikkii_jwt_token";
-const USER_KEY = "ikkii_user_data";
+const TOKEN_KEY = "ikkiijwt_token";
+const USER_KEY = "ikkiiuser_data";
 
 // ─── Provider ────────────────────────────────────────────────────────────────
 

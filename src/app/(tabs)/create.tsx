@@ -27,7 +27,7 @@ import { GAME_ICONS } from "../../assets/games";
 import { transact, Web3MobileWallet } from "@solana-mobile/mobile-wallet-adapter-protocol-web3js";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
-import { buildCreateEscrowInstructions, isNativeSol } from "../../utils/ikkiEscrow";
+import { buildCreateEscrowInstructions, buildCreateNftEscrowInstructions, isNativeSol, PROGRAM_ID_V2 } from "../../utils/ikkiiEscrow";
 import { CONNECTION, withTimeout } from "../../utils/connection";
 import { getErrorMessage } from "../../utils/error";
 import * as Crypto from "expo-crypto";
@@ -60,6 +60,11 @@ export default function CreateDuelScreen() {
     const [selectedToken, setSelectedToken] = useState(0);
     const [customMint, setCustomMint] = useState("");
     const [useCustomMint, setUseCustomMint] = useState(false);
+    const [isNftStake, setIsNftStake] = useState(false);
+    // Pre-filled demo SFT mint for hackathon — replace with your own devnet 0-decimal token
+    const DEMO_NFT_MINT = "2adnfMSH42Mh7MrvfFAEimU8pTgYR4qdAko1ZfChMUx1";
+    const [nftMint, setNftMint] = useState(DEMO_NFT_MINT);
+    const [showCustomNftInput, setShowCustomNftInput] = useState(false);
     const [selectedExpiry, setSelectedExpiry] = useState(2);
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -85,9 +90,15 @@ export default function CreateDuelScreen() {
 
     const validate = (): boolean => {
         const errs: Record<string, string> = {};
-        const amount = parseFloat(stakeAmount);
-        if (!stakeAmount || isNaN(amount) || amount <= 0) {
-            errs.stakeAmount = "Enter a valid positive amount";
+        if (isNftStake) {
+            if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(nftMint)) {
+                errs.nftMint = "Invalid NFT mint address";
+            }
+        } else {
+            const amount = parseFloat(stakeAmount);
+            if (!stakeAmount || isNaN(amount) || amount <= 0) {
+                errs.stakeAmount = "Enter a valid positive amount";
+            }
         }
         if (useCustomMint && !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(customMint)) {
             errs.customMint = "Invalid Solana token address";
@@ -106,13 +117,99 @@ export default function CreateDuelScreen() {
         setLoading(true);
 
         try {
-            const tokenMintStr = useCustomMint ? customMint : COMMON_TOKENS[selectedToken].mint;
-            const tokenMint = new PublicKey(tokenMintStr);
-            const stakeAmt = parseFloat(stakeAmount);
+            let tokenMintStr: string;
+            let tokenMint: PublicKey;
+            let stakeAmt = 0;
+            let stakeAmtSmallest = 0;
+            let tokenSymbol = "";
+            let decimals = 1;
+            let instructions: any[] = [];
+
+            if (isNftStake) {
+                // NFT duel (v2)
+                tokenMintStr = nftMint;
+                tokenMint = new PublicKey(nftMint);
+                stakeAmt = 1;
+                stakeAmtSmallest = 1;
+                tokenSymbol = "NFT";
+                decimals = 1;
+
+                // Verify player owns the NFT
+                const playerAta = getAssociatedTokenAddressSync(tokenMint, wallet.publicKey, false);
+                const ataInfo = await CONNECTION.getAccountInfo(playerAta);
+                if (!ataInfo) {
+                    throw new Error("You don't have an ATA for this NFT. Make sure you own it on devnet.");
+                }
+                const balanceRes = await CONNECTION.getTokenAccountBalance(playerAta);
+                const balance = Number(balanceRes.value.amount);
+                if (balance < 1) {
+                    throw new Error("You don't own this NFT.");
+                }
+
+                const expiryMs = EXPIRATION_PRESETS[selectedExpiry].ms;
+                const duelId = Crypto.randomUUID();
+
+                instructions = buildCreateEscrowInstructions(
+                    duelId, stakeAmtSmallest, expiryMs, tokenMint, wallet.publicKey, PROGRAM_ID_V2
+                );
+
+                const latestBlockhash = await CONNECTION.getLatestBlockhash();
+                const tx = new Transaction({ feePayer: wallet.publicKey, ...latestBlockhash });
+                for (const ix of instructions) tx.add(ix);
+
+                let txSignature = "";
+                await transact(async (w: Web3MobileWallet) => {
+                    await w.authorize({
+                        cluster: "devnet",
+                        identity: { name: "Ikkii", uri: "https://ikkii.app", icon: "favicon.ico" },
+                    });
+                    const [sig] = await w.signAndSendTransactions({ transactions: [tx] });
+                    txSignature = sig;
+                });
+
+                if (!txSignature) throw new Error("Transaction failed or was rejected by wallet");
+
+                showToast("Confirming transaction...", "info");
+                const confirmation = await withTimeout(
+                    CONNECTION.confirmTransaction(
+                        { signature: txSignature, ...latestBlockhash },
+                        "confirmed"
+                    ),
+                    60_000,
+                    "Transaction confirmation timed out. Check your wallet for status."
+                );
+                if (confirmation.value.err) {
+                    throw new Error(`Transaction failed on-chain: ${JSON.stringify(confirmation.value.err)}`);
+                }
+
+                const { duel } = await duelsAPI.create({
+                    username: user.username,
+                    stakeAmount: stakeAmt,
+                    stakeAmountSmallest: stakeAmtSmallest,
+                    tokenMint: tokenMintStr,
+                    gameId: selectedGameProfile?.gameId,
+                    expiresInMs: expiryMs,
+                    txSignature,
+                    duelId,
+                    isNft: true,
+                });
+
+                escrowAPI.recordTransaction(user.id, { type: "STAKE", amount: stakeAmt, duelId: duel.id })
+                    .catch((err) => console.error("[Escrow] Failed to record transaction:", err));
+
+                showToast("NFT Duel created! Waiting for opponent...", "success");
+                router.push(`/duel/${duel.id}`);
+                return;
+            }
+
+            // Regular token duel (v1)
+            tokenMintStr = useCustomMint ? customMint : COMMON_TOKENS[selectedToken].mint;
+            tokenMint = new PublicKey(tokenMintStr);
+            stakeAmt = parseFloat(stakeAmount);
             const expiryMs = EXPIRATION_PRESETS[selectedExpiry].ms;
-            const tokenSymbol = useCustomMint ? "CUSTOM" : COMMON_TOKENS[selectedToken].symbol;
-            const decimals = getTokenDecimals(tokenSymbol);
-            const stakeAmtSmallest = Math.round(stakeAmt * decimals);
+            tokenSymbol = useCustomMint ? "CUSTOM" : COMMON_TOKENS[selectedToken].symbol;
+            decimals = getTokenDecimals(tokenSymbol);
+            stakeAmtSmallest = Math.round(stakeAmt * decimals);
             const duelId = Crypto.randomUUID();
 
             if (isNativeSol(tokenMint)) {
@@ -142,12 +239,12 @@ export default function CreateDuelScreen() {
                 }
             }
 
-            const instructions = buildCreateEscrowInstructions(
+            const tokenInstructions = buildCreateEscrowInstructions(
                 duelId, stakeAmtSmallest, expiryMs, tokenMint, wallet.publicKey
             );
             const latestBlockhash = await CONNECTION.getLatestBlockhash();
             const tx = new Transaction({ feePayer: wallet.publicKey, ...latestBlockhash });
-            for (const ix of instructions) tx.add(ix);
+            for (const ix of tokenInstructions) tx.add(ix);
 
             let txSignature = "";
             await transact(async (w: Web3MobileWallet) => {
@@ -633,6 +730,90 @@ export default function CreateDuelScreen() {
                                             );
                                         })}
                                     </View>
+
+                                    {/* NFT stake toggle */}
+                                    <Pressable
+                                        onPress={() => setIsNftStake(!isNftStake)}
+                                        style={{
+                                            flexDirection: "row",
+                                            alignItems: "center",
+                                            gap: 7,
+                                            marginTop: 14,
+                                            paddingVertical: 6,
+                                        }}
+                                    >
+                                        <Ionicons
+                                            name={isNftStake ? "checkbox" : "square-outline"}
+                                            size={16}
+                                            color={isNftStake ? theme.accent : theme.textMuted}
+                                        />
+                                        <Text style={{ color: theme.textSecondary, fontSize: 11, letterSpacing: 0.2 }}>
+                                            Stake NFT (v2)
+                                        </Text>
+                                    </Pressable>
+
+                                    {isNftStake && (
+                                        <View style={{ marginTop: 12 }}>
+                                            {!showCustomNftInput ? (
+                                                <Pressable
+                                                    onPress={() => setShowCustomNftInput(true)}
+                                                    style={{
+                                                        borderWidth: 1.5,
+                                                        borderColor: theme.borderNeon,
+                                                        borderRadius: 14,
+                                                        padding: 14,
+                                                        backgroundColor: theme.accentBg,
+                                                    }}
+                                                >
+                                                    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                                                        <View style={{
+                                                            width: 36,
+                                                            height: 36,
+                                                            borderRadius: 10,
+                                                            backgroundColor: theme.accent,
+                                                            justifyContent: "center",
+                                                            alignItems: "center",
+                                                        }}>
+                                                            <Ionicons name="image" size={18} color="#fff" />
+                                                        </View>
+                                                        <View style={{ flex: 1 }}>
+                                                            <Text style={{ color: theme.textPrimary, fontWeight: "700", fontSize: 13 }}>
+                                                                Demo SFT
+                                                            </Text>
+                                                            <Text style={{ color: theme.textMuted, fontSize: 10, marginTop: 2 }} numberOfLines={1}>
+                                                                {nftMint.slice(0, 18)}…{nftMint.slice(-4)}
+                                                            </Text>
+                                                        </View>
+                                                        <Ionicons name="checkmark-circle" size={18} color={theme.accent} />
+                                                    </View>
+                                                    <Text style={{ color: theme.textMuted, fontSize: 9, marginTop: 8 }}>
+                                                        Tap to edit or use a custom NFT mint
+                                                    </Text>
+                                                </Pressable>
+                                            ) : (
+                                                <View>
+                                                    <Input
+                                                        label="NFT Mint Address"
+                                                        placeholder="Base58 encoded NFT mint"
+                                                        value={nftMint}
+                                                        onChangeText={setNftMint}
+                                                        autoCapitalize="none"
+                                                    />
+                                                    <Pressable
+                                                        onPress={() => {
+                                                            setNftMint(DEMO_NFT_MINT);
+                                                            setShowCustomNftInput(false);
+                                                        }}
+                                                        style={{ marginTop: 8, alignSelf: "flex-start" }}
+                                                    >
+                                                        <Text style={{ color: theme.accent, fontSize: 11 }}>
+                                                            Reset to demo mint
+                                                        </Text>
+                                                    </Pressable>
+                                                </View>
+                                            )}
+                                        </View>
+                                    )}
 
                                     {/* Custom mint toggle */}
                                     <Pressable

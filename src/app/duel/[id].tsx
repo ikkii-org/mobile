@@ -20,7 +20,7 @@ import { useWallet } from "../../components/WalletProvider";
 import { transact, Web3MobileWallet } from "@solana-mobile/mobile-wallet-adapter-protocol-web3js";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
-import { buildJoinEscrowInstructions, buildCancelEscrowInstructions, buildUnwrapSolInstruction, isNativeSol } from "../../utils/ikkiEscrow";
+import { buildJoinEscrowInstructions, buildCancelEscrowInstructions, buildUnwrapSolInstruction, isNativeSol, PROGRAM_ID_V2 } from "../../utils/ikkiiEscrow";
 import { CONNECTION, withTimeout } from "../../utils/connection";
 import { getErrorMessage } from "../../utils/error";
 import { GAME_ICONS } from "../../assets/games";
@@ -272,6 +272,7 @@ export default function DuelDetailScreen() {
                 tokenMint,
                 wallet.publicKey,
                 stakeAmtSmallest,
+                duel.isNft ? PROGRAM_ID_V2 : undefined,
             );
 
             const latestBlockhash = await CONNECTION.getLatestBlockhash();
@@ -335,7 +336,7 @@ export default function DuelDetailScreen() {
         setActionLoading(true);
         try {
             const tokenMint = new PublicKey(duel.tokenMint);
-            const instructions = buildCancelEscrowInstructions(duel.id, tokenMint, wallet.publicKey);
+            const instructions = buildCancelEscrowInstructions(duel.id, tokenMint, wallet.publicKey, duel.isNft ? PROGRAM_ID_V2 : undefined);
             const latestBlockhash = await CONNECTION.getLatestBlockhash();
             const tx = new Transaction({ feePayer: wallet.publicKey, ...latestBlockhash });
             for (const ix of instructions) tx.add(ix);

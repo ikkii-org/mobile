@@ -14,7 +14,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useWallet } from "../../components/WalletProvider";
 import { useTheme, ThemeTokens } from "../../contexts/ThemeContext";
 import { escrowAPI } from "../../services/api";
-import { buildUnwrapSolInstruction } from "../../utils/ikkiEscrow";
+import { buildUnwrapSolInstruction } from "../../utils/ikkiiEscrow";
 import { CONNECTION } from "../../utils/connection";
 import type { Wallet, Transaction as TxType } from "../../types";
 
