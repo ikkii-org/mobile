@@ -62,7 +62,7 @@ export default function CreateDuelScreen() {
     const [useCustomMint, setUseCustomMint] = useState(false);
     const [isNftStake, setIsNftStake] = useState(false);
     // Pre-filled demo NFT mint for hackathon — minted fresh on devnet
-    const DEMO_NFT_MINT = "5iRDugZqcVYrEnbJTLarwrBk4GeT6ATbU615NvqzfGhN";
+    const DEMO_NFT_MINT = "ANbBVJgzR1wo8mLswnBymQYeH5FieQos6tkGk5rGPHkp";
     const [nftMint, setNftMint] = useState(DEMO_NFT_MINT);
     const [showCustomNftInput, setShowCustomNftInput] = useState(false);
     const [selectedExpiry, setSelectedExpiry] = useState(2);
