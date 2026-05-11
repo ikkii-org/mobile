@@ -40,7 +40,6 @@ function getTokenDecimals(symbol: string): number {
 const STEPS = [
     { key: "game", label: "Game", icon: "game-controller-outline" as keyof typeof Ionicons.glyphMap },
     { key: "stake", label: "Stake", icon: "cash-outline" as keyof typeof Ionicons.glyphMap },
-    { key: "token", label: "Token", icon: "custom-sol" as any },
     { key: "timer", label: "Duration", icon: "time-outline" as keyof typeof Ionicons.glyphMap },
     { key: "confirm", label: "Confirm", icon: "checkmark-circle-outline" as keyof typeof Ionicons.glyphMap },
 ] as const;
@@ -60,7 +59,7 @@ export default function CreateDuelScreen() {
     const [selectedToken, setSelectedToken] = useState(0);
     const [customMint, setCustomMint] = useState("");
     const [useCustomMint, setUseCustomMint] = useState(false);
-    const [isNftStake, setIsNftStake] = useState(false);
+    const [stakeMode, setStakeMode] = useState<"tokens" | "nft">("tokens");
     // Pre-filled demo NFT mint for hackathon — minted fresh on devnet
     const DEMO_NFT_MINT = "ANbBVJgzR1wo8mLswnBymQYeH5FieQos6tkGk5rGPHkp";
     const [nftMint, setNftMint] = useState(DEMO_NFT_MINT);
@@ -90,7 +89,7 @@ export default function CreateDuelScreen() {
 
     const validate = (): boolean => {
         const errs: Record<string, string> = {};
-        if (isNftStake) {
+        if (stakeMode === "nft") {
             if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(nftMint)) {
                 errs.nftMint = "Invalid NFT mint address";
             }
@@ -125,7 +124,7 @@ export default function CreateDuelScreen() {
             let decimals = 1;
             let instructions: any[] = [];
 
-            if (isNftStake) {
+            if (stakeMode === "nft") {
                 // NFT duel (v2)
                 tokenMintStr = nftMint;
                 tokenMint = new PublicKey(nftMint);
@@ -358,47 +357,39 @@ export default function CreateDuelScreen() {
 
                 {/* ═══ STEP PROGRESS BAR ═══ */}
                 <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 0 }}>
-                        {STEPS.map((s, i) => (
-                            <React.Fragment key={s.key}>
-                                {/* Step node */}
-                                <Pressable
-                                    onPress={() => { if (i <= step) setStep(i); }}
-                                    style={{
-                                        width: 30,
-                                        height: 30,
-                                        borderRadius: 8,
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        backgroundColor: i <= step ? theme.accent : theme.bgCard,
-                                        borderWidth: 1.5,
-                                        borderColor: i <= step ? theme.accentNeon : theme.border,
-                                    }}
-                                >
-                                    {i < step ? (
-                                        <Ionicons name="checkmark" size={13} color={theme.textInverse} />
-                                    ) : s.icon === "custom-sol" ? (
-                                        <Image
-                                            source={require("../../../assets/sol.png")}
-                                            style={{ width: 14, height: 14, tintColor: i === step ? theme.textInverse : theme.textMuted }}
-                                            resizeMode="contain"
-                                        />
-                                    ) : (
-                                        <Ionicons name={s.icon} size={12} color={i === step ? theme.textInverse : theme.textMuted} />
-                                    )}
-                                </Pressable>
-                                {/* Connector */}
-                                {i < STEPS.length - 1 && (
-                                    <View style={{
-                                        flex: 1,
-                                        height: 2,
-                                        backgroundColor: i < step ? theme.accent : theme.border,
-                                        marginHorizontal: 2,
-                                    }} />
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 0 }}>
+                    {STEPS.map((s, i) => (
+                        <React.Fragment key={s.key}>
+                            <Pressable
+                                onPress={() => { if (i <= step) setStep(i); }}
+                                style={{
+                                    width: 30,
+                                    height: 30,
+                                    borderRadius: 8,
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    backgroundColor: i <= step ? theme.accent : theme.bgCard,
+                                    borderWidth: 1.5,
+                                    borderColor: i <= step ? theme.accentNeon : theme.border,
+                                }}
+                            >
+                                {i < step ? (
+                                    <Ionicons name="checkmark" size={13} color={theme.textInverse} />
+                                ) : (
+                                    <Ionicons name={s.icon} size={12} color={i === step ? theme.textInverse : theme.textMuted} />
                                 )}
-                            </React.Fragment>
-                        ))}
-                    </View>
+                            </Pressable>
+                            {i < STEPS.length - 1 && (
+                                <View style={{
+                                    flex: 1,
+                                    height: 2,
+                                    backgroundColor: i < step ? theme.accent : theme.border,
+                                    marginHorizontal: 2,
+                                }} />
+                            )}
+                        </React.Fragment>
+                    ))}
+                </View>
                 </View>
 
                 {/* ═══ STEP CONTENT ═══ */}
@@ -584,82 +575,7 @@ export default function CreateDuelScreen() {
                                 </View>
                             )}
 
-                            {/* ── Step 1: Stake Amount ── */}
-                            {step === 1 && (
-                                <View>
-                                    <Text style={{
-                                        color: theme.textPrimary,
-                                        fontSize: 15,
-                                        fontWeight: "900",
-                                        letterSpacing: 0.5,
-                                        marginBottom: 3,
-                                    }}>
-                                        How much to stake?
-                                    </Text>
-                                    <Text style={{ color: theme.textMuted, fontSize: 11, marginBottom: 18 }}>
-                                        Both players put up equal amounts
-                                    </Text>
-
-                                    <Input
-                                        label="Stake Amount"
-                                        placeholder="0.00"
-                                        value={stakeAmount}
-                                        onChangeText={setStakeAmount}
-                                        keyboardType="numeric"
-                                        error={errors.stakeAmount}
-                                    />
-
-                                    {/* Quick-pick amounts */}
-                                    <View style={{ flexDirection: "row", gap: 6, marginTop: 8 }}>
-                                        {["0.1", "0.5", "1", "5"].map((amt) => (
-                                            <Pressable
-                                                key={amt}
-                                                onPress={() => setStakeAmount(amt)}
-                                                style={{
-                                                    flex: 1,
-                                                    paddingVertical: 10,
-                                                    borderRadius: 8,
-                                                    alignItems: "center",
-                                                    backgroundColor: stakeAmount === amt ? theme.accentBg : theme.bgCard,
-                                                    borderWidth: 1,
-                                                    borderColor: stakeAmount === amt ? theme.borderNeon : theme.border,
-                                                }}
-                                            >
-                                                <Text style={{
-                                                    color: stakeAmount === amt ? theme.accent : theme.textSecondary,
-                                                    fontSize: 13,
-                                                    fontWeight: "800",
-                                                }}>
-                                                    {amt}
-                                                </Text>
-                                            </Pressable>
-                                        ))}
-                                    </View>
-
-                                    {/* Potential win preview */}
-                                    {stakeAmount && parseFloat(stakeAmount) > 0 && (
-                                        <View style={{
-                                            marginTop: 16,
-                                            flexDirection: "row",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            gap: 6,
-                                            backgroundColor: theme.green + "08",
-                                            borderRadius: 8,
-                                            paddingVertical: 10,
-                                            borderWidth: 1,
-                                            borderColor: theme.green + "20",
-                                        }}>
-                                            <Ionicons name="trophy" size={13} color={theme.green} />
-                                            <Text style={{ color: theme.green, fontSize: 12, fontWeight: "900", letterSpacing: 0.3 }}>
-                                                Win {potentialWin} SOL/USDC
-                                            </Text>
-                                        </View>
-                                    )}
-                                </View>
-                            )}
-
-                            {/* ── Step 2: Token Selection ── */}
+                            {/* ── Step 1: Stake Configuration ── */}
                             {step === 2 && (
                                 <View>
                                     <Text style={{
@@ -669,126 +585,259 @@ export default function CreateDuelScreen() {
                                         letterSpacing: 0.5,
                                         marginBottom: 3,
                                     }}>
-                                        Choose your token
+                                        What are you staking?
                                     </Text>
                                     <Text style={{ color: theme.textMuted, fontSize: 11, marginBottom: 18 }}>
-                                        Select the token you want to stake
+                                        Choose tokens or an NFT for this duel
                                     </Text>
 
-                                    <View style={{ gap: 8 }}>
-                                        {COMMON_TOKENS.map((token, i) => {
-                                            const isSelected = !useCustomMint && selectedToken === i;
-                                            return (
-                                                <Pressable
-                                                    key={token.symbol}
-                                                    onPress={() => { setSelectedToken(i); setUseCustomMint(false); }}
-                                                    style={{
-                                                        flexDirection: "row",
-                                                        alignItems: "center",
-                                                        padding: 12,
-                                                        borderRadius: 10,
-                                                        borderWidth: 1.5,
-                                                        borderColor: isSelected ? theme.borderNeon : theme.border,
-                                                        backgroundColor: isSelected ? theme.accentBg : theme.bgCard,
-                                                    }}
-                                                >
-                                                    <View style={{
-                                                        width: 36,
-                                                        height: 36,
-                                                        borderRadius: 10,
-                                                        backgroundColor: isSelected ? theme.accent + "20" : theme.bgMuted,
-                                                        alignItems: "center",
-                                                        justifyContent: "center",
-                                                        marginRight: 10,
-                                                    }}>
-                                                        <Text style={{
-                                                            fontSize: 13,
-                                                            fontWeight: "900",
-                                                            color: isSelected ? theme.accent : theme.textSecondary,
-                                                            letterSpacing: 1,
-                                                        }}>
-                                                            {token.symbol.charAt(0)}
-                                                        </Text>
-                                                    </View>
-                                                    <View style={{ flex: 1 }}>
-                                                        <Text style={{
-                                                            fontWeight: "800",
-                                                            fontSize: 13,
-                                                            letterSpacing: 0.3,
-                                                            color: isSelected ? theme.accent : theme.textPrimary,
-                                                        }}>
-                                                            {token.symbol}
-                                                        </Text>
-                                                        <Text style={{ color: theme.textMuted, fontSize: 10, marginTop: 2 }}>
-                                                            {token.name}
-                                                        </Text>
-                                                    </View>
-                                                    {isSelected && (
-                                                        <Ionicons name="checkmark-circle" size={18} color={theme.accent} />
-                                                    )}
-                                                </Pressable>
-                                            );
-                                        })}
+                                    {/* Mode switch: Tokens vs NFT */}
+                                    <View style={{ flexDirection: "row", gap: 10, marginBottom: 20 }}>
+                                        {(["tokens", "nft"] as const).map((mode) => (
+                                            <Pressable
+                                                key={mode}
+                                                onPress={() => setStakeMode(mode)}
+                                                style={{
+                                                    flex: 1,
+                                                    paddingVertical: 14,
+                                                    borderRadius: 12,
+                                                    alignItems: "center",
+                                                    borderWidth: 2,
+                                                    borderColor: stakeMode === mode ? theme.accent : theme.border,
+                                                    backgroundColor: stakeMode === mode ? theme.accentBg : theme.bgCard,
+                                                }}
+                                            >
+                                                <Ionicons
+                                                    name={mode === "tokens" ? "cash-outline" : "image"}
+                                                    size={22}
+                                                    color={stakeMode === mode ? theme.accent : theme.textMuted}
+                                                />
+                                                <Text style={{
+                                                    marginTop: 6,
+                                                    fontSize: 13,
+                                                    fontWeight: "800",
+                                                    color: stakeMode === mode ? theme.accent : theme.textSecondary,
+                                                    letterSpacing: 0.5,
+                                                    textTransform: "uppercase",
+                                                }}>
+                                                    {mode === "tokens" ? "Tokens" : "NFT"}
+                                                </Text>
+                                            </Pressable>
+                                        ))}
                                     </View>
 
-                                    {/* NFT stake toggle */}
-                                    <Pressable
-                                        onPress={() => setIsNftStake(!isNftStake)}
-                                        style={{
-                                            flexDirection: "row",
-                                            alignItems: "center",
-                                            gap: 7,
-                                            marginTop: 14,
-                                            paddingVertical: 6,
-                                        }}
-                                    >
-                                        <Ionicons
-                                            name={isNftStake ? "checkbox" : "square-outline"}
-                                            size={16}
-                                            color={isNftStake ? theme.accent : theme.textMuted}
-                                        />
-                                        <Text style={{ color: theme.textSecondary, fontSize: 11, letterSpacing: 0.2 }}>
-                                            Stake NFT (v2)
-                                        </Text>
-                                    </Pressable>
+                                    {/* ── TOKENS MODE ── */}
+                                    {stakeMode === "tokens" && (
+                                        <View>
+                                            {/* Token selector */}
+                                            <Text style={{
+                                                color: theme.textPrimary,
+                                                fontSize: 13,
+                                                fontWeight: "800",
+                                                letterSpacing: 1,
+                                                textTransform: "uppercase",
+                                                marginBottom: 10,
+                                            }}>
+                                                Token
+                                            </Text>
+                                            <View style={{ gap: 8 }}>
+                                                {COMMON_TOKENS.map((token, i) => {
+                                                    const isSelected = !useCustomMint && selectedToken === i;
+                                                    return (
+                                                        <Pressable
+                                                            key={token.symbol}
+                                                            onPress={() => { setSelectedToken(i); setUseCustomMint(false); }}
+                                                            style={{
+                                                                flexDirection: "row",
+                                                                alignItems: "center",
+                                                                padding: 12,
+                                                                borderRadius: 10,
+                                                                borderWidth: 1.5,
+                                                                borderColor: isSelected ? theme.borderNeon : theme.border,
+                                                                backgroundColor: isSelected ? theme.accentBg : theme.bgCard,
+                                                            }}
+                                                        >
+                                                            <View style={{
+                                                                width: 36,
+                                                                height: 36,
+                                                                borderRadius: 10,
+                                                                backgroundColor: isSelected ? theme.accent + "20" : theme.bgMuted,
+                                                                alignItems: "center",
+                                                                justifyContent: "center",
+                                                                marginRight: 10,
+                                                            }}>
+                                                                <Text style={{
+                                                                    fontSize: 13,
+                                                                    fontWeight: "900",
+                                                                    color: isSelected ? theme.accent : theme.textSecondary,
+                                                                    letterSpacing: 1,
+                                                                }}>
+                                                                    {token.symbol.charAt(0)}
+                                                                </Text>
+                                                            </View>
+                                                            <View style={{ flex: 1 }}>
+                                                                <Text style={{
+                                                                    fontWeight: "800",
+                                                                    fontSize: 13,
+                                                                    letterSpacing: 0.3,
+                                                                    color: isSelected ? theme.accent : theme.textPrimary,
+                                                                }}>
+                                                                    {token.symbol}
+                                                                </Text>
+                                                                <Text style={{ color: theme.textMuted, fontSize: 10, marginTop: 2 }}>
+                                                                    {token.name}
+                                                                </Text>
+                                                            </View>
+                                                            {isSelected && (
+                                                                <Ionicons name="checkmark-circle" size={18} color={theme.accent} />
+                                                            )}
+                                                        </Pressable>
+                                                    );
+                                                })}
+                                            </View>
 
-                                    {isNftStake && (
-                                        <View style={{ marginTop: 12 }}>
+                                            {/* Custom mint toggle */}
+                                            <Pressable
+                                                onPress={() => setUseCustomMint(!useCustomMint)}
+                                                style={{
+                                                    flexDirection: "row",
+                                                    alignItems: "center",
+                                                    gap: 7,
+                                                    marginTop: 14,
+                                                    paddingVertical: 6,
+                                                }}
+                                            >
+                                                <Ionicons
+                                                    name={useCustomMint ? "checkbox" : "square-outline"}
+                                                    size={16}
+                                                    color={useCustomMint ? theme.accent : theme.textMuted}
+                                                />
+                                                <Text style={{ color: theme.textSecondary, fontSize: 11, letterSpacing: 0.2 }}>
+                                                    Use custom token mint
+                                                </Text>
+                                            </Pressable>
+
+                                            {useCustomMint && (
+                                                <View style={{ marginTop: 8 }}>
+                                                    <Input
+                                                        label="Custom Token Mint Address"
+                                                        placeholder="Base58 encoded address"
+                                                        value={customMint}
+                                                        onChangeText={setCustomMint}
+                                                        autoCapitalize="none"
+                                                        error={errors.customMint}
+                                                    />
+                                                </View>
+                                            )}
+
+                                            {/* Amount input */}
+                                            <View style={{ marginTop: 20 }}>
+                                                <Text style={{
+                                                    color: theme.textPrimary,
+                                                    fontSize: 13,
+                                                    fontWeight: "800",
+                                                    letterSpacing: 1,
+                                                    textTransform: "uppercase",
+                                                    marginBottom: 10,
+                                                }}>
+                                                    Amount
+                                                </Text>
+                                                <Input
+                                                    label="Stake Amount"
+                                                    placeholder="0.00"
+                                                    value={stakeAmount}
+                                                    onChangeText={setStakeAmount}
+                                                    keyboardType="numeric"
+                                                    error={errors.stakeAmount}
+                                                />
+                                                <View style={{ flexDirection: "row", gap: 6, marginTop: 8 }}>
+                                                    {["0.1", "0.5", "1", "5"].map((amt) => (
+                                                        <Pressable
+                                                            key={amt}
+                                                            onPress={() => setStakeAmount(amt)}
+                                                            style={{
+                                                                flex: 1,
+                                                                paddingVertical: 10,
+                                                                borderRadius: 8,
+                                                                alignItems: "center",
+                                                                backgroundColor: stakeAmount === amt ? theme.accentBg : theme.bgCard,
+                                                                borderWidth: 1,
+                                                                borderColor: stakeAmount === amt ? theme.borderNeon : theme.border,
+                                                            }}
+                                                        >
+                                                            <Text style={{
+                                                                color: stakeAmount === amt ? theme.accent : theme.textSecondary,
+                                                                fontSize: 13,
+                                                                fontWeight: "800",
+                                                            }}>
+                                                                {amt}
+                                                            </Text>
+                                                        </Pressable>
+                                                    ))}
+                                                </View>
+                                            </View>
+                                        </View>
+                                    )}
+
+                                    {/* ── NFT MODE ── */}
+                                    {stakeMode === "nft" && (
+                                        <View>
+                                            <Text style={{
+                                                color: theme.textPrimary,
+                                                fontSize: 13,
+                                                fontWeight: "800",
+                                                letterSpacing: 1,
+                                                textTransform: "uppercase",
+                                                marginBottom: 10,
+                                            }}>
+                                                Select NFT
+                                            </Text>
+
                                             {!showCustomNftInput ? (
                                                 <Pressable
                                                     onPress={() => setShowCustomNftInput(true)}
                                                     style={{
-                                                        borderWidth: 1.5,
+                                                        borderWidth: 2,
                                                         borderColor: theme.borderNeon,
                                                         borderRadius: 14,
-                                                        padding: 14,
+                                                        padding: 16,
                                                         backgroundColor: theme.accentBg,
                                                     }}
                                                 >
-                                                    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                                                    <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
                                                         <View style={{
-                                                            width: 36,
-                                                            height: 36,
-                                                            borderRadius: 10,
+                                                            width: 48,
+                                                            height: 48,
+                                                            borderRadius: 12,
                                                             backgroundColor: theme.accent,
                                                             justifyContent: "center",
                                                             alignItems: "center",
                                                         }}>
-                                                            <Ionicons name="image" size={18} color="#fff" />
+                                                            <Ionicons name="image" size={24} color="#fff" />
                                                         </View>
                                                         <View style={{ flex: 1 }}>
-                                                            <Text style={{ color: theme.textPrimary, fontWeight: "700", fontSize: 13 }}>
-                                                                Demo SFT
+                                                            <Text style={{ color: theme.textPrimary, fontWeight: "800", fontSize: 15 }}>
+                                                                Ikkii Demo NFT
                                                             </Text>
-                                                            <Text style={{ color: theme.textMuted, fontSize: 10, marginTop: 2 }} numberOfLines={1}>
-                                                                {nftMint.slice(0, 18)}…{nftMint.slice(-4)}
+                                                            <Text style={{ color: theme.textMuted, fontSize: 11, marginTop: 3 }} numberOfLines={1}>
+                                                                {nftMint.slice(0, 8)}…{nftMint.slice(-6)}
+                                                            </Text>
+                                                            <Text style={{ color: theme.accent, fontSize: 10, fontWeight: "700", marginTop: 4 }}>
+                                                                Quantity: 1
                                                             </Text>
                                                         </View>
-                                                        <Ionicons name="checkmark-circle" size={18} color={theme.accent} />
+                                                        <Ionicons name="checkmark-circle" size={22} color={theme.accent} />
                                                     </View>
-                                                    <Text style={{ color: theme.textMuted, fontSize: 9, marginTop: 8 }}>
-                                                        Tap to edit or use a custom NFT mint
-                                                    </Text>
+                                                    <View style={{
+                                                        marginTop: 12,
+                                                        paddingTop: 10,
+                                                        borderTopWidth: 1,
+                                                        borderTopColor: theme.border,
+                                                    }}>
+                                                        <Text style={{ color: theme.textMuted, fontSize: 10, textAlign: "center" }}>
+                                                            Tap to use a custom NFT mint address
+                                                        </Text>
+                                                    </View>
                                                 </Pressable>
                                             ) : (
                                                 <View>
@@ -798,6 +847,7 @@ export default function CreateDuelScreen() {
                                                         value={nftMint}
                                                         onChangeText={setNftMint}
                                                         autoCapitalize="none"
+                                                        error={errors.nftMint}
                                                     />
                                                     <Pressable
                                                         onPress={() => {
@@ -807,52 +857,18 @@ export default function CreateDuelScreen() {
                                                         style={{ marginTop: 8, alignSelf: "flex-start" }}
                                                     >
                                                         <Text style={{ color: theme.accent, fontSize: 11 }}>
-                                                            Reset to demo mint
+                                                            Reset to demo NFT
                                                         </Text>
                                                     </Pressable>
                                                 </View>
                                             )}
                                         </View>
                                     )}
-
-                                    {/* Custom mint toggle */}
-                                    <Pressable
-                                        onPress={() => setUseCustomMint(!useCustomMint)}
-                                        style={{
-                                            flexDirection: "row",
-                                            alignItems: "center",
-                                            gap: 7,
-                                            marginTop: 14,
-                                            paddingVertical: 6,
-                                        }}
-                                    >
-                                        <Ionicons
-                                            name={useCustomMint ? "checkbox" : "square-outline"}
-                                            size={16}
-                                            color={useCustomMint ? theme.accent : theme.textMuted}
-                                        />
-                                        <Text style={{ color: theme.textSecondary, fontSize: 11, letterSpacing: 0.2 }}>
-                                            Use custom token mint
-                                        </Text>
-                                    </Pressable>
-
-                                    {useCustomMint && (
-                                        <View style={{ marginTop: 8 }}>
-                                            <Input
-                                                label="Custom Token Mint Address"
-                                                placeholder="Base58 encoded address"
-                                                value={customMint}
-                                                onChangeText={setCustomMint}
-                                                autoCapitalize="none"
-                                                error={errors.customMint}
-                                            />
-                                        </View>
-                                    )}
                                 </View>
                             )}
 
-                            {/* ── Step 3: Duration ── */}
-                            {step === 3 && (
+                            {/* ── Step 2: Duration ── */}
+                            {step === 2 && (
                                 <View>
                                     <Text style={{
                                         color: theme.textPrimary,
@@ -912,8 +928,8 @@ export default function CreateDuelScreen() {
                                 </View>
                             )}
 
-                            {/* ── Step 4: Confirm ── */}
-                            {step === 4 && (
+                            {/* ── Step 3: Confirm ── */}
+                            {step === 3 && (
                                 <View>
                                     <Text style={{
                                         color: theme.textPrimary,
@@ -924,12 +940,15 @@ export default function CreateDuelScreen() {
                                     }}>
                                         Review your duel
                                     </Text>
-
                                     {[
                                         { label: "Game", value: selectedGame?.name ?? "Custom Duel", color: theme.accent },
-                                        { label: "Your Stake", value: `${stakeAmount || "0"} ${tokenSymbolDisplay}`, color: theme.textPrimary },
-                                        { label: "Total Pot", value: `${potentialWin} ${tokenSymbolDisplay}`, color: theme.green },
-                                        { label: "Token", value: tokenSymbolDisplay, color: theme.accent },
+                                        stakeMode === "nft"
+                                            ? { label: "Your Stake", value: "1 Ikkii NFT", color: theme.textPrimary }
+                                            : { label: "Your Stake", value: `${stakeAmount || "0"} ${tokenSymbolDisplay}`, color: theme.textPrimary },
+                                        stakeMode === "nft"
+                                            ? { label: "Total Pot", value: "1 Ikkii NFT", color: theme.green }
+                                            : { label: "Total Pot", value: `${potentialWin} ${tokenSymbolDisplay}`, color: theme.green },
+                                        { label: "Token Type", value: stakeMode === "nft" ? "NFT (v2)" : tokenSymbolDisplay, color: theme.accent },
                                         { label: "Duration", value: EXPIRATION_PRESETS[selectedExpiry].label, color: theme.textPrimary },
                                     ].map((row, i) => (
                                         <View key={i} style={{
