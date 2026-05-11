@@ -306,10 +306,16 @@ export default function CreateDuelScreen() {
             return true;
         }
         if (step === 1) {
+            if (stakeMode === "nft") {
+                return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(nftMint);
+            }
+            // Tokens mode
             const amount = parseFloat(stakeAmount);
             return stakeAmount && !isNaN(amount) && amount > 0;
         }
-        if (step === 2) return !useCustomMint || /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(customMint);
+        if (step === 2) {
+            return true; // Duration step always has a selection
+        }
         return true;
     };
 
@@ -576,7 +582,7 @@ export default function CreateDuelScreen() {
                             )}
 
                             {/* ── Step 1: Stake Configuration ── */}
-                            {step === 2 && (
+                            {step === 1 && (
                                 <View>
                                     <Text style={{
                                         color: theme.textPrimary,
