@@ -5,6 +5,10 @@ import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { transact, Web3MobileWallet } from "@solana-mobile/mobile-wallet-adapter-protocol-web3js";
+import {
+    TOKEN_PROGRAM_ID,
+    getAssociatedTokenAddressSync,
+} from "@solana/spl-token";
 
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
@@ -194,6 +198,7 @@ export default function WalletScreen() {
 
     const [wallet, setWallet] = useState<Wallet | null>(null);
     const [transactions, setTransactions] = useState<TxType[]>([]);
+    const [nfts, setNfts] = useState<{ mint: string; amount: string }[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [claimLoading, setClaimLoading] = useState(false);
@@ -217,13 +222,30 @@ export default function WalletScreen() {
                 status: tx.transactionStatus,
                 txSignature: tx.txSignature ?? undefined,
             })));
+
+            // Fetch NFTs from on-chain wallet
+            if (publicKey) {
+                const walletPk = new PublicKey(publicKey);
+                const tokenAccounts = await CONNECTION.getParsedTokenAccountsByOwner(
+                    walletPk,
+                    { programId: TOKEN_PROGRAM_ID }
+                );
+                const ownedNfts = tokenAccounts.value
+                    .map((v: any) => ({
+                        mint: v.account.data.parsed.info.mint as string,
+                        amount: v.account.data.parsed.info.tokenAmount.amount as string,
+                        decimals: v.account.data.parsed.info.tokenAmount.decimals as number,
+                    }))
+                    .filter((t) => t.decimals === 0 && parseInt(t.amount, 10) > 0);
+                setNfts(ownedNfts);
+            }
         } catch (err: any) {
             console.error("Failed to fetch wallet:", err);
         } finally {
             setLoading(false);
             setRefreshing(false);
         }
-    }, [user?.id]);
+    }, [user?.id, publicKey]);
 
     useEffect(() => { fetchWallet(); }, [fetchWallet]);
 
@@ -493,6 +515,55 @@ export default function WalletScreen() {
                         ))}
                     </View>
                 </View>
+
+                {/* ═══ YOUR NFTs ═══ */}
+                {nfts.length > 0 && (
+                    <View style={{ paddingHorizontal: 20, marginTop: 18 }}>
+                        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
+                            <View style={{ width: 12, height: 2, backgroundColor: theme.accent, borderRadius: 1, marginRight: 4 }} />
+                            <View style={{ width: 4, height: 4, borderRadius: 1, backgroundColor: theme.accent, marginRight: 8 }} />
+                            <Text style={{
+                                color: theme.textPrimary, fontSize: 11, fontWeight: "800",
+                                letterSpacing: 2, textTransform: "uppercase", flex: 1,
+                            }}>
+                                Your NFTs
+                            </Text>
+                        </View>
+
+                        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+                            {nfts.map((nft, idx) => (
+                                <Card
+                                    key={idx}
+                                    noFill
+                                    noPadding
+                                    style={{
+                                        width: "48%",
+                                        borderRadius: 12,
+                                    }}
+                                >
+                                    <View style={{ alignItems: "center" }}>
+                                        <View style={{ width: "40%", height: 2, backgroundColor: theme.accent + "50", borderBottomLeftRadius: 1, borderBottomRightRadius: 1 }} />
+                                    </View>
+                                    <View style={{ padding: 14, alignItems: "center" }}>
+                                        <View style={{
+                                            width: 40, height: 40, borderRadius: 10,
+                                            backgroundColor: theme.accent + "18", borderWidth: 1, borderColor: theme.accent + "30",
+                                            alignItems: "center", justifyContent: "center", marginBottom: 8,
+                                        }}>
+                                            <Ionicons name="image" size={18} color={theme.accent} />
+                                        </View>
+                                        <Text style={{ color: theme.textPrimary, fontSize: 10, fontWeight: "700", textAlign: "center" }} numberOfLines={1}>
+                                            {nft.mint.slice(0, 6)}…{nft.mint.slice(-4)}
+                                        </Text>
+                                        <Text style={{ color: theme.textMuted, fontSize: 9, marginTop: 3 }}>
+                                            Qty: {nft.amount}
+                                        </Text>
+                                    </View>
+                                </Card>
+                            ))}
+                        </View>
+                    </View>
+                )}
 
                 {/* ═══ RECENT ACTIVITY ═══ */}
                 <View style={{ paddingHorizontal: 20, marginTop: 22 }}>
